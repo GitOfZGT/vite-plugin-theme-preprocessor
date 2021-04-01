@@ -1,0 +1,7 @@
+/coverage
+/dist
+/node_modules
+/test/fixtures
+CHANGELOG.md
+/test/sass
+/test/scss
