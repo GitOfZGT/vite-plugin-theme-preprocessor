@@ -125,6 +125,53 @@ export default function themePreprocessorPlugin(options = {}) {
               `Preprocessor dependency "${resolveName}" not found. Did you install it?`
             );
           }
+          const substituteDir = `${targetRsoleved}/dist/substitute`;
+          const substitutePreprocessorDir = `${substituteDir}/${resolveName}`;
+
+          if (!fsExtra.existsSync(substitutePreprocessorDir)) {
+            const funName = `get${
+              resolveName.slice(0, 1).toUpperCase() + resolveName.slice(1)
+            }`;
+
+            fsExtra.mkdirSync(substitutePreprocessorDir);
+
+            fsExtra.copySync(
+              `${resolveDir}/package.json`,
+              `${substitutePreprocessorDir}/package.json`
+            );
+
+            fsExtra.copySync(
+              `${substituteDir}/preprocessor-substitute-options.js`,
+              `${substitutePreprocessorDir}/preprocessor-substitute-options.js`
+            );
+            const mainFile = resolved
+              .replace(resolveDir, "")
+              .replace(/^\/+/g, "");
+
+            fsExtra.writeFileSync(
+              `${substitutePreprocessorDir}/${mainFile}`,
+              `const nodePreprocessor = require("${pack.name}/original/${resolveName}/${mainFile}");
+              const { ${funName} } =  require("@zougt/some-loader-utils");
+              module.exports = ${funName}({
+                implementation: nodePreprocessor,
+              });
+              `
+            );
+
+            if (fsExtra.existsSync(`${resolveDir}/bin`)) {
+              fsExtra.readdirSync(`${resolveDir}/bin`).forEach((name) => {
+                if (fsExtra.statSync(`${resolveDir}/bin/${name}`).isFile()) {
+                  fsExtra.mkdirSync(`${substitutePreprocessorDir}/bin`);
+                  fsExtra.writeFileSync(
+                    `${substitutePreprocessorDir}/bin/${name}`,
+                    `#!/usr/bin/env node\n"use strict";\n
+                    require("${pack.name}/original/${resolveName}/bin/${name}");
+                  `
+                  );
+                }
+              });
+            }
+          }
           // 替换了处理器的标识
 
           const isSubstitute = fsExtra.existsSync(
@@ -135,12 +182,7 @@ export default function themePreprocessorPlugin(options = {}) {
             // 替换处理器
             return fsExtra
               .move(resolveDir, `${targetRsoleved}/original/${resolveName}`)
-              .then(() =>
-                fsExtra.copy(
-                  `${targetRsoleved}/dist/substitute/${resolveName}`,
-                  resolveDir
-                )
-              );
+              .then(() => fsExtra.copy(substitutePreprocessorDir, resolveDir));
           }
 
           return Promise.resolve();
@@ -300,7 +342,11 @@ export default function themePreprocessorPlugin(options = {}) {
     },
   };
 }
-
+/**
+ *
+ * @param {*} { langs: ['scss','less'] }
+ * @returns
+ */
 export function resetStylePreprocessor(options = {}) {
   if (!Array.isArray(options.langs) || !options.langs.length) {
     return Promise.resolve();
@@ -313,19 +359,24 @@ export function resetStylePreprocessor(options = {}) {
   return Promise.all(
     options.langs.map((lang) => {
       const resolveName = lang === "scss" ? "sass" : lang;
-      const resolved = require
-        .resolve(resolveName, {
-          paths: [options.root || process.cwd()],
-        })
-        .replace(/\\/g, "/");
+      let isSubstitute = false;
+      let resolveDir = "";
+      try {
+        const resolved = require
+          .resolve(resolveName, {
+            paths: [options.root || process.cwd()],
+          })
+          .replace(/\\/g, "/");
 
-      const resolveDir = `${resolved.slice(
-        0,
-        resolved.indexOf(`/${resolveName}/`)
-      )}/${resolveName}`;
-      const isSubstitute = fsExtra.existsSync(
-        `${resolveDir}/preprocessor-substitute-options.js`
-      );
+        resolveDir = `${resolved.slice(
+          0,
+          resolved.indexOf(`/${resolveName}/`)
+        )}/${resolveName}`;
+        isSubstitute = fsExtra.existsSync(
+          `${resolveDir}/preprocessor-substitute-options.js`
+        );
+      // eslint-disable-next-line no-empty
+      } catch (e) {}
 
       if (isSubstitute) {
         // 替换处理器
