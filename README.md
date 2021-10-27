@@ -12,8 +12,6 @@
 - generateBundle
 - transformIndexHtml
 
-> 注：由于 vite 内置 css 插件未提供外接`less`、`sass`的口子(类似[`webpack-contrib/less-loader`](https://github.com/webpack-contrib/less-loader)的`implementation`)，在`@zougt/vite-plugin-theme-preprocessor`的 buildStart 内替换了相对于根目录的 node_modules 里面的`less`或`sass`
-
 ## 安装与使用
 
 ```bash
@@ -26,9 +24,7 @@ yarn add @zougt/vite-plugin-theme-preprocessor -D
 **vite.config.js**
 
 ```js
-import themePreprocessorPlugin, {
-  getModulesScopeGenerater,
-} from "@zougt/vite-plugin-theme-preprocessor";
+import themePreprocessorPlugin from "@zougt/vite-plugin-theme-preprocessor";
 export default {
   plugins: [
     themePreprocessorPlugin({
@@ -182,3 +178,19 @@ const toggleTheme = (scopeName = "theme-default") => {
 ```
 
 webpack 版本的实现方案请查看[`@zougt/some-loader-utils`](https://github.com/GitOfZGT/some-loader-utils#getSass)
+
+## resetStylePreprocessor
+
+> 注：由于 vite 内置 css 插件未提供外接`less`、`sass`的口子(类似[`webpack-contrib/less-loader`](https://github.com/webpack-contrib/less-loader)的`implementation`)，在`@zougt/vite-plugin-theme-preprocessor`的 buildStart 内替换了相对于根目录的 node_modules 里面的`less`或`sass`
+
+所以想要复原`less`或`sass`包的位置，可以重新安装依赖，也可以调用 resetStylePreprocessor 方法
+
+```js
+// resetLess.js
+import { resetStylePreprocessor } from "@zougt/vite-plugin-theme-preprocessor";
+resetStylePreprocessor({ langs: ["less"] });
+```
+
+```bash
+node resetLess.js
+```
