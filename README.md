@@ -155,8 +155,6 @@ src/components/Button/style.css
 
 ## 在线切换主题 css 文件
 
-当启用 themePreprocessorPlugin 的 extract 后，
-
 ```js
 import {
   addClassNameToHtmlTag,
