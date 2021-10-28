@@ -12,6 +12,15 @@
 - generateBundle
 - transformIndexHtml
 
+核心功能是 [@zougt/some-loader-utils](https://github.com/GitOfZGT/some-loader-utils)提供的 `getLess` 和 `getSass` ，目前没有 `stylus`的需求
+
+- [getLess](https://github.com/GitOfZGT/some-loader-utils#getLess)，本质上是对[less 包](https://github.com/less/less.js)的扩展
+- [getSass](https://github.com/GitOfZGT/some-loader-utils#getSass)，本质上是对[sass 包](https://github.com/sass/dart-sass)的扩展
+
+## 案例效果图
+
+![主题切换效果](./images/example.gif)
+
 ## 安装与使用
 
 ```bash
@@ -29,6 +38,7 @@ export default {
   plugins: [
     themePreprocessorPlugin({
       scss: {
+        // 预处理器的变量文件
         multipleScopeVars: [
           {
             scopeName: "theme-default",
@@ -224,6 +234,73 @@ toggleTheme({
 //   }
 // }
 ```
+
+### multipleScopeVars[].includeStyles
+
+Type: `Object`
+
+当存在以下情况时，可以用这个属性处理
+
+```css
+.theme-blue .el-button:focus,
+.theme-blue .el-button:hover {
+    /*这里的color值由 $primary-color 编译得来的，所以选择器前面加了 .theme-blue 提高了权重*/
+    color: #0281ff;
+    border-color: #b3d9ff;
+    background-color: #e6f2ff;
+}
+.el-button--primary:focus,
+.el-button--primary:hover {
+    /*这里的color值不是由 变量 编译得来的，这时就会被上面那个 color 覆盖了， 实际上这里的color才是需要的效果*/
+    color: #fff;
+}
+```
+
+```js
+const includeStyles = {
+    '.el-button--primary:hover, .el-button--primary:focus': {
+        color: '#FFFFFF',
+    },
+};
+const multipleScopeVars = [
+    {
+        scopeName: 'theme-default',
+        path: path.resolve('src/theme/default-vars.less'),
+        includeStyles,
+    },
+    {
+        scopeName: 'theme-mauve',
+        path: path.resolve('src/theme/mauve-vars.less'),
+        includeStyles,
+    },
+];
+```
+
+得到
+
+```css
+.theme-blue .el-button:focus,
+.theme-blue .el-button:hover {
+    /*这里的color值由 $primary-color 编译得来的，所以选择器前面加了 .theme-blue 提高了权重*/
+    color: #0281ff;
+    border-color: #b3d9ff;
+    background-color: #e6f2ff;
+}
+.theme-blue .el-button--primary:focus,
+.theme-blue .el-button--primary:hover {
+    /*这里的color值不是由 变量 编译得来的，通过includeStyles也提高了权重得到实际的效果*/
+    color: #ffffff;
+}
+```
+
+出现权重问题效果图
+
+![includeStyles](./images/includeStyles_p.png)
+
+使用了 includeStyles 的效果图
+
+![includeStyles](./images/includeStyles_r.png)
+
 
 webpack 版本的实现方案请查看[`@zougt/some-loader-utils`](https://github.com/GitOfZGT/some-loader-utils#getSass)
 
