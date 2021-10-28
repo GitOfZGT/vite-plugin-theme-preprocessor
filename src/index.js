@@ -39,6 +39,7 @@ export default function themePreprocessorPlugin(options = {}) {
   };
   let buildCommand;
   const processorNames = Object.keys(options);
+  let browerPreprocessorOptions = {};
   const langDefaultOptions = {
     multipleScopeVars: [],
     outputDir: "",
@@ -61,10 +62,10 @@ export default function themePreprocessorPlugin(options = {}) {
 
       const css = conf.css || {};
       const preprocessorOptions = css.preprocessorOptions || {};
-      let allmultipleScopeVars = [];
+      const allmultipleScopeVars = [];
       processorNames.forEach((lang) => {
         const langOptions = { ...langDefaultOptions, ...(options[lang] || {}) };
-
+        browerPreprocessorOptions = langOptions;
         if (
           Array.isArray(langOptions.multipleScopeVars) &&
           langOptions.multipleScopeVars.length
@@ -73,21 +74,29 @@ export default function themePreprocessorPlugin(options = {}) {
             ...(preprocessorOptions[lang] || {}),
             multipleScopeVars: langOptions.multipleScopeVars,
           };
-          allmultipleScopeVars = allmultipleScopeVars.concat(
-            langOptions.multipleScopeVars
-          );
+          langOptions.multipleScopeVars.forEach((item) => {
+            const founded = allmultipleScopeVars.find(
+              (f) => f.scopeName === item.scopeName
+            );
+            if (founded) {
+              let paths = [];
+              if (Array.isArray(founded.path)) {
+                paths = paths.concat(founded.path);
+              } else if (founded.path) {
+                paths.push(founded.path);
+              }
+              if (Array.isArray(item.path)) {
+                paths = paths.concat(item.path);
+              } else if (item.path) {
+                paths.push(item.path);
+              }
+              founded.path = paths;
+            } else {
+              allmultipleScopeVars.push(item);
+            }
+          });
         }
       });
-      const targetRsoleved = require
-        .resolve(pack.name, {
-          paths: [config.root],
-        })
-        .replace(/[\\/]index\.js$/, "");
-
-      fsExtra.writeFileSync(
-        `${targetRsoleved}/allmultipleScopeVars.js`,
-        `module.exports = ${JSON.stringify(allmultipleScopeVars)}`
-      );
       css.preprocessorOptions = preprocessorOptions;
       const modulesOptions = css.modules !== false ? css.modules || {} : null;
 
@@ -106,6 +115,20 @@ export default function themePreprocessorPlugin(options = {}) {
     configResolved(resolvedConfig) {
       // 存储最终解析的配置
       config = resolvedConfig;
+      const targetRsoleved = require
+        .resolve(pack.name, {
+          paths: [config.root],
+        })
+        .replace(/[\\/]index\.js$/, "");
+      fsExtra.writeFileSync(
+        `${targetRsoleved}/toBrowerEnvs.js`,
+        `exports.browerPreprocessorOptions = ${JSON.stringify(
+          browerPreprocessorOptions
+        )};\nexports.assetsDir="${
+          config.build.assetsDir
+        }";\nexports.buildCommand="${buildCommand}";
+        `
+      );
     },
 
     buildStart() {

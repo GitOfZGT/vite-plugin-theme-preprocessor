@@ -166,78 +166,19 @@ src/components/Button/style.css
 ## 在线切换主题 css 文件
 
 ```js
-import {
-  addClassNameToHtmlTag,
-  toggleTheme,
-} from "@zougt/vite-plugin-theme-preprocessor/dist/browser-utils.js";
+import { toggleTheme } from "@zougt/vite-plugin-theme-preprocessor/dist/browser-utils.js";
 
-/*
- * 在开发模式下可以直接用 addClassNameToHtmlTag
- */
-addClassNameToHtmlTag({
-  // 必填
-  scopeName: "theme-default",
-  //可填可不填， 对应 themePreprocessorPlugin 的 multipleScopeVars ，如果当前项目中使用了两次 themePreprocessorPlugin以上（大多数不会出现） ，这里的multipleScopeVars必填
-  // multipleScopeVars
-});
-/*
- * 在生产模式下 当启用 themePreprocessorPlugin 的 extract后，可以用 toggleTheme
- */
 toggleTheme({
   scopeName: "theme-default",
-  // link的href，  config.build.assetsDir 是对应vite的配置build.assetsDir
-  customLinkHref: (href) => `${config.build.assetsDir}${href}`,
-  themeLinkTagId: "theme-link-tag",
-  // 是否已经对抽取的css文件内对应scopeName的权重类名移除了
-  hasRemoveScopeName: false,
-  // "head" || "body"
-  themeLinkTagInjectTo: "head",
-  //可填可不填， 对应 themePreprocessorPlugin 的 multipleScopeVars ，如果当前项目中使用了两次 themePreprocessorPlugin以上（大多数不会出现） ，这里的multipleScopeVars必填
+  // 可选，看情况用， link的href处理，生产模式下都可用， 当启用 themePreprocessorPlugin 的 extract后才需要
+  // customLinkHref: (href) => href,
+  // 可选，默认对应 themePreprocessorPlugin 的 themeLinkTagId
+  // themeLinkTagId: "theme-link-tag",
+  // 可选 "head" || "body"
+  // themeLinkTagInjectTo: "head",
+  //可填可不填， 对应 themePreprocessorPlugin 的 multipleScopeVars
   // multipleScopeVars
 });
-//  function addClassNameToHtmlTag({ scopeName }) {
-//   const currentHtmlClassNames = (
-//     document.documentElement.className || ""
-//   ).split(/\s+/g);
-//   if (!currentHtmlClassNames.includes(scopeName)) {
-//     currentHtmlClassNames.push(scopeName);
-//     document.documentElement.className = currentHtmlClassNames.join(" ");
-//   }
-// }
-
-//  function toggleTheme(opts) {
-//   const options = {
-//     scopeName: "theme-default",
-//     customLinkHref: (href) => href,
-//     themeLinkTagId: "theme-link-tag",
-//     // 是否已经对抽取的css文件内对应scopeName的权重类名移除了
-//     hasRemoveScopeName: false,
-//     // "head" || "body"
-//     themeLinkTagInjectTo: "head",
-//     ...opts,
-//   };
-//   let styleLink = document.getElementById(options.themeLinkTagId);
-//   if (styleLink) {
-//     // 假如存在id为theme-link-tag 的link标签，直接修改其href
-//     styleLink.href = options.customLinkHref(`/${options.scopeName}.css`);
-//     // 注：如果是removeCssScopeName:true移除了主题文件的权重类名，就可以不用修改className 操作
-//     if (!options.hasRemoveScopeName) {
-//       addClassNameToHtmlTag(options);
-//     }
-//   } else {
-//     // 不存在的话，则新建一个
-//     styleLink = document.createElement("link");
-//     styleLink.type = "text/css";
-//     styleLink.rel = "stylesheet";
-//     styleLink.id = options.themeLinkTagId;
-//     styleLink.href = options.customLinkHref(`/${options.scopeName}.css`);
-//     // 注：如果是removeCssScopeName:true移除了主题文件的权重类名，就可以不用修改className 操作
-//     if (!options.hasRemoveScopeName) {
-//       addClassNameToHtmlTag(options);
-//     }
-//     document[options.themeLinkTagInjectTo].append(styleLink);
-//   }
-// }
 ```
 
 ### multipleScopeVars[].includeStyles

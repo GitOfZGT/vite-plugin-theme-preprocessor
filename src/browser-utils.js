@@ -4,10 +4,11 @@
 /* eslint-env browser */
 
 function addClassNameToHtmlTag({ scopeName, multipleScopeVars }) {
-  const allmultipleScopeVars = require("./allmultipleScopeVars");
-  const $multipleScopeVars = Array.isArray(multipleScopeVars)
-    ? multipleScopeVars
-    : allmultipleScopeVars;
+  const { browerPreprocessorOptions } = require("./toBrowerEnvs");
+  const $multipleScopeVars =
+    Array.isArray(multipleScopeVars) && multipleScopeVars.length
+      ? multipleScopeVars
+      : browerPreprocessorOptions.multipleScopeVars;
 
   let currentHtmlClassNames = (document.documentElement.className || "").split(
     /\s+/g
@@ -23,22 +24,37 @@ function addClassNameToHtmlTag({ scopeName, multipleScopeVars }) {
 
 function toggleTheme(opts) {
   const options = {
-    multipleScopeVars:[],
+    // multipleScopeVars: [],
     scopeName: "theme-default",
     customLinkHref: (href) => href,
-    themeLinkTagId: "theme-link-tag",
-    // 是否已经对抽取的css文件内对应scopeName的权重类名移除了
-    hasRemoveScopeName: false,
+    // themeLinkTagId: "theme-link-tag",
     // "head" || "body"
-    themeLinkTagInjectTo: "head",
+    // themeLinkTagInjectTo: "head",
     ...opts,
   };
-  let styleLink = document.getElementById(options.themeLinkTagId);
+  const {
+    assetsDir,
+    buildCommand,
+    browerPreprocessorOptions,
+  } = require("./toBrowerEnvs");
+  if (buildCommand !== "build" || !browerPreprocessorOptions.extract) {
+    addClassNameToHtmlTag(options);
+    return;
+  }
+  let styleLink = document.getElementById(
+    options.themeLinkTagId || browerPreprocessorOptions.themeLinkTagId
+  );
+  const href = options.customLinkHref(
+    `/${(browerPreprocessorOptions.outputDir || assetsDir || "").replace(
+      /(^\/+|\/+$)/g,
+      ""
+    )}/${options.scopeName}.css`
+  );
   if (styleLink) {
     // 假如存在id为theme-link-tag 的link标签，直接修改其href
-    styleLink.href = options.customLinkHref(`/${options.scopeName}.css`);
+    styleLink.href = href;
     // 注：如果是removeCssScopeName:true移除了主题文件的权重类名，就可以不用修改className 操作
-    if (!options.hasRemoveScopeName) {
+    if (!browerPreprocessorOptions.removeCssScopeName) {
       addClassNameToHtmlTag(options);
     }
   } else {
@@ -46,13 +62,17 @@ function toggleTheme(opts) {
     styleLink = document.createElement("link");
     styleLink.type = "text/css";
     styleLink.rel = "stylesheet";
-    styleLink.id = options.themeLinkTagId;
-    styleLink.href = options.customLinkHref(`/${options.scopeName}.css`);
+    styleLink.id =
+      options.themeLinkTagId || browerPreprocessorOptions.themeLinkTagId;
+    styleLink.href = href;
     // 注：如果是removeCssScopeName:true移除了主题文件的权重类名，就可以不用修改className 操作
-    if (!options.hasRemoveScopeName) {
+    if (!browerPreprocessorOptions.removeCssScopeName) {
       addClassNameToHtmlTag(options);
     }
-    document[options.themeLinkTagInjectTo].append(styleLink);
+    document[
+      options.themeLinkTagInjectTo ||
+        browerPreprocessorOptions.themeLinkTagInjectTo.replace("-prepend", "")
+    ].append(styleLink);
   }
 }
 exports.addClassNameToHtmlTag = addClassNameToHtmlTag;
