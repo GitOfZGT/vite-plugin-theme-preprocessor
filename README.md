@@ -170,7 +170,7 @@ import { toggleTheme } from "@zougt/vite-plugin-theme-preprocessor/dist/browser-
 
 toggleTheme({
   scopeName: "theme-default",
-  // 可选，看情况用， link的href处理，生产模式下都可用， 当启用 themePreprocessorPlugin 的 extract后才需要
+  // 可选，link的href处理，看情况用， 当启用 themePreprocessorPlugin 的 extract后才需要
   // customLinkHref: (href) => href,
   // 可选，默认对应 themePreprocessorPlugin 的 themeLinkTagId
   // themeLinkTagId: "theme-link-tag",
