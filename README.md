@@ -192,6 +192,8 @@ toggleTheme({
   hasRemoveScopeName: false,
   // "head" || "body"
   themeLinkTagInjectTo: "head",
+  //可填可不填， 对应 themePreprocessorPlugin 的 multipleScopeVars ，如果当前项目中使用了两次 themePreprocessorPlugin以上（大多数不会出现） ，这里的multipleScopeVars必填
+  // multipleScopeVars
 });
 //  function addClassNameToHtmlTag({ scopeName }) {
 //   const currentHtmlClassNames = (
