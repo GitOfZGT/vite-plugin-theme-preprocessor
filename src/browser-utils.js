@@ -1,17 +1,29 @@
+/* eslint-disable global-require */
+/* eslint-disable import/extensions */
+/* eslint-disable import/no-unresolved */
 /* eslint-env browser */
 
-export function addClassNameToHtmlTag({ scopeName }) {
-  const currentHtmlClassNames = (
-    document.documentElement.className || ""
-  ).split(/\s+/g);
+function addClassNameToHtmlTag({ scopeName, multipleScopeVars }) {
+  const allmultipleScopeVars = require("./allmultipleScopeVars");
+  const $multipleScopeVars = Array.isArray(multipleScopeVars)
+    ? multipleScopeVars
+    : allmultipleScopeVars;
+
+  let currentHtmlClassNames = (document.documentElement.className || "").split(
+    /\s+/g
+  );
   if (!currentHtmlClassNames.includes(scopeName)) {
+    currentHtmlClassNames = currentHtmlClassNames.filter((classname) =>
+      $multipleScopeVars.every((item) => item.scopeName !== classname)
+    );
     currentHtmlClassNames.push(scopeName);
     document.documentElement.className = currentHtmlClassNames.join(" ");
   }
 }
 
-export function toggleTheme(opts) {
+function toggleTheme(opts) {
   const options = {
+    multipleScopeVars:[],
     scopeName: "theme-default",
     customLinkHref: (href) => href,
     themeLinkTagId: "theme-link-tag",
@@ -43,8 +55,9 @@ export function toggleTheme(opts) {
     document[options.themeLinkTagInjectTo].append(styleLink);
   }
 }
-
-export default {
+exports.addClassNameToHtmlTag = addClassNameToHtmlTag;
+exports.toggleTheme = toggleTheme;
+module.exports = {
   toggleTheme,
   addClassNameToHtmlTag,
 };

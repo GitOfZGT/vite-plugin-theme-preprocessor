@@ -78,6 +78,16 @@ export default function themePreprocessorPlugin(options = {}) {
           );
         }
       });
+      const targetRsoleved = require
+        .resolve(pack.name, {
+          paths: [config.root],
+        })
+        .replace(/[\\/]index\.js$/, "");
+
+      fsExtra.writeFileSync(
+        `${targetRsoleved}/allmultipleScopeVars.js`,
+        `module.exports = ${JSON.stringify(allmultipleScopeVars)}`
+      );
       css.preprocessorOptions = preprocessorOptions;
       const modulesOptions = css.modules !== false ? css.modules || {} : null;
 
@@ -375,7 +385,7 @@ export function resetStylePreprocessor(options = {}) {
         isSubstitute = fsExtra.existsSync(
           `${resolveDir}/preprocessor-substitute-options.js`
         );
-      // eslint-disable-next-line no-empty
+        // eslint-disable-next-line no-empty
       } catch (e) {}
 
       if (isSubstitute) {

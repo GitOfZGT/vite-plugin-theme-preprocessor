@@ -175,7 +175,10 @@ import {
  * 在开发模式下可以直接用 addClassNameToHtmlTag
  */
 addClassNameToHtmlTag({
+  // 必填
   scopeName: "theme-default",
+  //可填可不填， 对应 themePreprocessorPlugin 的 multipleScopeVars ，如果当前项目中使用了两次 themePreprocessorPlugin以上（大多数不会出现） ，这里的multipleScopeVars必填
+  // multipleScopeVars
 });
 /*
  * 在生产模式下 当启用 themePreprocessorPlugin 的 extract后，可以用 toggleTheme
@@ -244,35 +247,35 @@ Type: `Object`
 ```css
 .theme-blue .el-button:focus,
 .theme-blue .el-button:hover {
-    /*这里的color值由 $primary-color 编译得来的，所以选择器前面加了 .theme-blue 提高了权重*/
-    color: #0281ff;
-    border-color: #b3d9ff;
-    background-color: #e6f2ff;
+  /*这里的color值由 $primary-color 编译得来的，所以选择器前面加了 .theme-blue 提高了权重*/
+  color: #0281ff;
+  border-color: #b3d9ff;
+  background-color: #e6f2ff;
 }
 .el-button--primary:focus,
 .el-button--primary:hover {
-    /*这里的color值不是由 变量 编译得来的，这时就会被上面那个 color 覆盖了， 实际上这里的color才是需要的效果*/
-    color: #fff;
+  /*这里的color值不是由 变量 编译得来的，这时就会被上面那个 color 覆盖了， 实际上这里的color才是需要的效果*/
+  color: #fff;
 }
 ```
 
 ```js
 const includeStyles = {
-    '.el-button--primary:hover, .el-button--primary:focus': {
-        color: '#FFFFFF',
-    },
+  ".el-button--primary:hover, .el-button--primary:focus": {
+    color: "#FFFFFF",
+  },
 };
 const multipleScopeVars = [
-    {
-        scopeName: 'theme-default',
-        path: path.resolve('src/theme/default-vars.less'),
-        includeStyles,
-    },
-    {
-        scopeName: 'theme-mauve',
-        path: path.resolve('src/theme/mauve-vars.less'),
-        includeStyles,
-    },
+  {
+    scopeName: "theme-default",
+    path: path.resolve("src/theme/default-vars.less"),
+    includeStyles,
+  },
+  {
+    scopeName: "theme-mauve",
+    path: path.resolve("src/theme/mauve-vars.less"),
+    includeStyles,
+  },
 ];
 ```
 
@@ -281,15 +284,15 @@ const multipleScopeVars = [
 ```css
 .theme-blue .el-button:focus,
 .theme-blue .el-button:hover {
-    /*这里的color值由 $primary-color 编译得来的，所以选择器前面加了 .theme-blue 提高了权重*/
-    color: #0281ff;
-    border-color: #b3d9ff;
-    background-color: #e6f2ff;
+  /*这里的color值由 $primary-color 编译得来的，所以选择器前面加了 .theme-blue 提高了权重*/
+  color: #0281ff;
+  border-color: #b3d9ff;
+  background-color: #e6f2ff;
 }
 .theme-blue .el-button--primary:focus,
 .theme-blue .el-button--primary:hover {
-    /*这里的color值不是由 变量 编译得来的，通过includeStyles也提高了权重得到实际的效果*/
-    color: #ffffff;
+  /*这里的color值不是由 变量 编译得来的，通过includeStyles也提高了权重得到实际的效果*/
+  color: #ffffff;
 }
 ```
 
@@ -300,7 +303,6 @@ const multipleScopeVars = [
 使用了 includeStyles 的效果图
 
 ![includeStyles](./images/includeStyles_r.png)
-
 
 webpack 版本的实现方案请查看[`@zougt/some-loader-utils`](https://github.com/GitOfZGT/some-loader-utils#getSass)
 
