@@ -176,9 +176,21 @@ toggleTheme({
   // themeLinkTagId: "theme-link-tag",
   // 可选 "head" || "body"
   // themeLinkTagInjectTo: "head",
-  //可填可不填， 对应 themePreprocessorPlugin 的 multipleScopeVars
+  // 可选，对应 themePreprocessorPlugin 的 multipleScopeVars
   // multipleScopeVars
 });
+```
+
+为确保 toggleTheme 的一些默认参数是最新，需要在vite.config.js按如下配置
+
+```js
+// vite.config.js
+export default {
+  optimizeDeps: {
+    // 排除 browser-utils.js 在vite的缓存依赖
+    exclude: ["@zougt/vite-plugin-theme-preprocessor/dist/browser-utils"],
+  },
+};
 ```
 
 ### multipleScopeVars[].includeStyles

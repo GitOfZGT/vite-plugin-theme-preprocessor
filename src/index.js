@@ -122,11 +122,11 @@ export default function themePreprocessorPlugin(options = {}) {
         .replace(/[\\/]index\.js$/, "");
       fsExtra.writeFileSync(
         `${targetRsoleved}/toBrowerEnvs.js`,
-        `exports.browerPreprocessorOptions = ${JSON.stringify(
+        `export const browerPreprocessorOptions = ${JSON.stringify(
           browerPreprocessorOptions
-        )};\nexports.assetsDir="${
+        )};\nexport const assetsDir="${
           config.build.assetsDir
-        }";\nexports.buildCommand="${buildCommand}";
+        }";\nexport const buildCommand="${buildCommand}";
         `
       );
     },

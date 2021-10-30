@@ -1,6 +1,6 @@
 {
   "name": "@zougt/vite-plugin-theme-preprocessor",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "css theme preprocessor plugin for vite",
   "license": "MIT",
   "repository": "GitOfZGT/vite-plugin-theme-preprocessor",
@@ -15,7 +15,7 @@
     "start": "npm run build -- -w",
     "clean": "del-cli dist",
     "prebuild": "npm run clean",
-    "build": "cross-env NODE_ENV=production babel src -d dist --copy-files",
+    "build": "cross-env NODE_ENV=production babel src -d dist --ignore 'src/browser-utils.js','src/toBrowerEnvs.js' --copy-files",
     "commitlint": "commitlint --from=master",
     "security": "npm audit",
     "lint:prettier": "prettier --list-different .",
@@ -29,7 +29,7 @@
     "dist"
   ],
   "dependencies": {
-    "@zougt/some-loader-utils": "^1.3.2",
+    "@zougt/some-loader-utils": "^1.3.3",
     "fs-extra": "^9.1.0",
     "string-hash": "^1.1.3"
   },

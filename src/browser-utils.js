@@ -2,9 +2,13 @@
 /* eslint-disable import/extensions */
 /* eslint-disable import/no-unresolved */
 /* eslint-env browser */
+import {
+  assetsDir,
+  buildCommand,
+  browerPreprocessorOptions,
+} from "./toBrowerEnvs";
 
-function addClassNameToHtmlTag({ scopeName, multipleScopeVars }) {
-  const { browerPreprocessorOptions } = require("./toBrowerEnvs");
+export function addClassNameToHtmlTag({ scopeName, multipleScopeVars }) {
   const $multipleScopeVars =
     Array.isArray(multipleScopeVars) && multipleScopeVars.length
       ? multipleScopeVars
@@ -22,7 +26,7 @@ function addClassNameToHtmlTag({ scopeName, multipleScopeVars }) {
   }
 }
 
-function toggleTheme(opts) {
+export function toggleTheme(opts) {
   const options = {
     // multipleScopeVars: [],
     scopeName: "theme-default",
@@ -32,11 +36,7 @@ function toggleTheme(opts) {
     // themeLinkTagInjectTo: "head",
     ...opts,
   };
-  const {
-    assetsDir,
-    buildCommand,
-    browerPreprocessorOptions,
-  } = require("./toBrowerEnvs");
+
   if (buildCommand !== "build" || !browerPreprocessorOptions.extract) {
     addClassNameToHtmlTag(options);
     return;
@@ -75,9 +75,8 @@ function toggleTheme(opts) {
     ].append(styleLink);
   }
 }
-exports.addClassNameToHtmlTag = addClassNameToHtmlTag;
-exports.toggleTheme = toggleTheme;
-module.exports = {
+
+export default {
   toggleTheme,
   addClassNameToHtmlTag,
 };
