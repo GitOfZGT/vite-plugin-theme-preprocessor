@@ -19,7 +19,7 @@
 
 ## 案例效果图
 
-![主题切换效果](./images/example.gif)
+![主题切换效果](https://img-blog.csdnimg.cn/20210518124127696.gif)
 
 ## 安装与使用
 
@@ -253,11 +253,11 @@ const multipleScopeVars = [
 
 出现权重问题效果图
 
-![includeStyles](./images/includeStyles_p.png)
+![includeStyles](https://user-images.githubusercontent.com/21262000/133917696-804f8a75-2540-48e4-8b46-84ddc0b3fef1.png)
 
 使用了 includeStyles 的效果图
 
-![includeStyles](./images/includeStyles_r.png)
+![includeStyles](https://user-images.githubusercontent.com/21262000/133917724-4d64f4e5-af9b-4dd6-8481-b10b20f3204f.png)
 
 webpack 版本的实现方案请查看[`@zougt/some-loader-utils`](https://github.com/GitOfZGT/some-loader-utils#getSass)
 
