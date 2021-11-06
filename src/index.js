@@ -120,6 +120,7 @@ export default function themePreprocessorPlugin(options = {}) {
           paths: [config.root],
         })
         .replace(/[\\/]index\.js$/, "");
+      // 将一些参数打入到 toBrowerEnvs.js , 由brower-utils.js 获取
       fsExtra.writeFileSync(
         `${targetRsoleved}/toBrowerEnvs.js`,
         `export const browerPreprocessorOptions = ${JSON.stringify(
@@ -132,6 +133,7 @@ export default function themePreprocessorPlugin(options = {}) {
     },
 
     buildStart() {
+      // @zougt/vite-plugin-theme-preprocessor 被 require() 时的实际路径
       const targetRsoleved = require
         .resolve(pack.name, {
           paths: [config.root],
@@ -140,32 +142,40 @@ export default function themePreprocessorPlugin(options = {}) {
 
       return Promise.all(
         processorNames.map((lang) => {
-          const resolveName = lang === "scss" ? "sass" : lang;
-
+          const langName = lang === "scss" ? "sass" : lang;
+          // 得到 require('less') 时的绝对路径
           const resolved = require
-            .resolve(resolveName, {
+            .resolve(langName, {
               paths: [config.root],
             })
             .replace(/\\/g, "/");
-
-          const resolveDir = `${resolved.slice(
-            0,
-            resolved.indexOf(`/${resolveName}/`)
-          )}/${resolveName}`;
+          const pathnames = resolved.split("/");
+          // 存在类似 _less@ 开头的，兼容cnpm install
+          const index = pathnames.findIndex(
+            (str) => new RegExp(`^_${langName}@`).test(str) || str === langName
+          );
+          // 真正 less 执行的目录名称，通常情况下就是 "less" , 但cnpm install的可能就是 "_less@4.1.2@less"
+          const resolveName = pathnames[index];
+          // 完整的 less 所在的路径
+          const resolveDir = `${pathnames
+            .slice(0, index)
+            .join("/")}/${resolveName}`;
 
           if (!fsExtra.existsSync(resolveDir)) {
             throw new Error(
-              `Preprocessor dependency "${resolveName}" not found. Did you install it?`
+              `Preprocessor dependency "${langName}" not found. Did you install it?`
             );
           }
+          // substitute：替代品的源位置
           const substituteDir = `${targetRsoleved}/dist/substitute`;
           const substitutePreprocessorDir = `${substituteDir}/${resolveName}`;
 
           if (!fsExtra.existsSync(substitutePreprocessorDir)) {
+            // "getLess" || "getSass"
             const funName = `get${
-              resolveName.slice(0, 1).toUpperCase() + resolveName.slice(1)
+              langName.slice(0, 1).toUpperCase() + langName.slice(1)
             }`;
-
+            // 在substitute生成替代包
             fsExtra.mkdirSync(substitutePreprocessorDir);
 
             fsExtra.copySync(
@@ -177,10 +187,11 @@ export default function themePreprocessorPlugin(options = {}) {
               `${substituteDir}/preprocessor-substitute-options.js`,
               `${substitutePreprocessorDir}/preprocessor-substitute-options.js`
             );
+            // require('less')时的文件名，如 "index.js"
             const mainFile = resolved
               .replace(resolveDir, "")
               .replace(/^\/+/g, "");
-
+            // 向 "index.js" 中写上如 "getLess" 的调用
             fsExtra.writeFileSync(
               `${substitutePreprocessorDir}/${mainFile}`,
               `const nodePreprocessor = require("${pack.name}/original/${resolveName}/${mainFile}");
@@ -190,7 +201,7 @@ export default function themePreprocessorPlugin(options = {}) {
               });
               `
             );
-
+            // 如果 源less中存在bin，生成一份替代品的bin
             if (fsExtra.existsSync(`${resolveDir}/bin`)) {
               fsExtra.readdirSync(`${resolveDir}/bin`).forEach((name) => {
                 if (fsExtra.statSync(`${resolveDir}/bin/${name}`).isFile()) {
@@ -212,7 +223,7 @@ export default function themePreprocessorPlugin(options = {}) {
           );
 
           if (!isSubstitute) {
-            // 替换处理器
+            // 用less的替代品替换 源 less
             return fsExtra
               .move(resolveDir, `${targetRsoleved}/original/${resolveName}`)
               .then(() => fsExtra.copy(substitutePreprocessorDir, resolveDir));
@@ -314,6 +325,7 @@ export default function themePreprocessorPlugin(options = {}) {
     },
 
     transformIndexHtml(html) {
+      // 向html中添加抽取的主题css文件的link标签，并在html标签中添加 calssName
       let newHtml = html;
       const tags = [];
       processorNames.forEach((lang) => {
@@ -376,7 +388,7 @@ export default function themePreprocessorPlugin(options = {}) {
   };
 }
 /**
- *
+ * 复原源处理器包的位置
  * @param {*} { langs: ['scss','less'] }
  * @returns
  */
@@ -389,40 +401,35 @@ export function resetStylePreprocessor(options = {}) {
       paths: [options.root || process.cwd()],
     })
     .replace(/[\\/]dist[\\/]index\.js$/, "");
-  return Promise.all(
-    options.langs.map((lang) => {
-      const resolveName = lang === "scss" ? "sass" : lang;
-      let isSubstitute = false;
-      let resolveDir = "";
-      try {
-        const resolved = require
-          .resolve(resolveName, {
-            paths: [options.root || process.cwd()],
-          })
-          .replace(/\\/g, "/");
 
-        resolveDir = `${resolved.slice(
-          0,
-          resolved.indexOf(`/${resolveName}/`)
-        )}/${resolveName}`;
-        isSubstitute = fsExtra.existsSync(
-          `${resolveDir}/preprocessor-substitute-options.js`
-        );
-        // eslint-disable-next-line no-empty
-      } catch (e) {}
+  options.langs.forEach((lang) => {
+    const langName = lang === "scss" ? "sass" : lang;
+    let isSubstitute = false;
+    let resolveDir = "";
+    let resolveName = "";
+    try {
+      const resolved = require
+        .resolve(langName, {
+          paths: [options.root || process.cwd()],
+        })
+        .replace(/\\/g, "/");
+      const pathnames = resolved.split("/");
+      const index = pathnames.findIndex(
+        (str) => new RegExp(`^_${langName}@`).test(str) || str === langName
+      );
+      resolveName = pathnames[index];
+      resolveDir = `${pathnames.slice(0, index).join("/")}/${resolveName}`;
+      isSubstitute = fsExtra.existsSync(
+        `${resolveDir}/preprocessor-substitute-options.js`
+      );
+      // eslint-disable-next-line no-empty
+    } catch (e) {}
 
-      if (isSubstitute) {
-        // 替换处理器
-        return fsExtra
-          .remove(resolveDir)
-          .then(() =>
-            fsExtra.move(
-              `${targetRsoleved}/original/${resolveName}`,
-              resolveDir
-            )
-          );
-      }
-      return Promise.resolve();
-    })
-  );
+    if (isSubstitute) {
+      // 替换处理器
+      fsExtra.removeSync(resolveDir);
+      fsExtra.moveSync(`${targetRsoleved}/original/${resolveName}`, resolveDir);
+    }
+  });
+  return Promise.resolve();
 }
