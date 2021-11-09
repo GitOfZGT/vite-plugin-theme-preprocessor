@@ -175,13 +175,9 @@ export default function themePreprocessorPlugin(options = {}) {
             const funName = `get${
               langName.slice(0, 1).toUpperCase() + langName.slice(1)
             }`;
-            // 在substitute生成替代包
-            fsExtra.mkdirSync(substitutePreprocessorDir);
 
-            fsExtra.copySync(
-              `${resolveDir}/package.json`,
-              `${substitutePreprocessorDir}/package.json`
-            );
+            // 在substitute生成替代包
+            fsExtra.copySync(resolveDir, substitutePreprocessorDir);
 
             fsExtra.copySync(
               `${substituteDir}/preprocessor-substitute-options.js`,
@@ -205,7 +201,9 @@ export default function themePreprocessorPlugin(options = {}) {
             if (fsExtra.existsSync(`${resolveDir}/bin`)) {
               fsExtra.readdirSync(`${resolveDir}/bin`).forEach((name) => {
                 if (fsExtra.statSync(`${resolveDir}/bin/${name}`).isFile()) {
-                  fsExtra.mkdirSync(`${substitutePreprocessorDir}/bin`);
+                  if (!fsExtra.existsSync(`${substitutePreprocessorDir}/bin`)) {
+                    fsExtra.mkdirSync(`${substitutePreprocessorDir}/bin`);
+                  }
                   fsExtra.writeFileSync(
                     `${substitutePreprocessorDir}/bin/${name}`,
                     `#!/usr/bin/env node\n"use strict";\n
