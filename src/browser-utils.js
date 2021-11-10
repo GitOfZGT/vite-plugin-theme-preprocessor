@@ -58,7 +58,7 @@ export function toggleTheme(opts) {
     }/${options.scopeName}.css`.replace(/\/+(?=\/)/g, "")
   );
   if (styleLink) {
-    // 假如存在id为theme-link-tag 的link标签，创建一个新的添加上去加载完成后再300毫秒后移除旧的
+    // 假如存在id为theme-link-tag 的link标签，创建一个新的添加上去加载完成后再60毫秒后移除旧的
     styleLink.id = `${linkId}_old`;
     const newLink = createThemeLinkTag({ id: linkId, href });
     if (styleLink.nextSibling) {
@@ -70,12 +70,12 @@ export function toggleTheme(opts) {
       setTimeout(() => {
         styleLink.parentNode.removeChild(styleLink);
         styleLink = null;
-      }, 300);
+      }, 60);
+      // 注：如果是removeCssScopeName:true移除了主题文件的权重类名，就可以不用修改className 操作
+      if (!browerPreprocessorOptions.removeCssScopeName) {
+        addClassNameToHtmlTag(options);
+      }
     };
-    // 注：如果是removeCssScopeName:true移除了主题文件的权重类名，就可以不用修改className 操作
-    if (!browerPreprocessorOptions.removeCssScopeName) {
-      addClassNameToHtmlTag(options);
-    }
   } else {
     // 不存在的话，则新建一个
     styleLink = createThemeLinkTag({ id: linkId, href });
