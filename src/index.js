@@ -350,7 +350,7 @@ export default function themePreprocessorPlugin(options = {}) {
               (typeof langOptions.customThemeCssFileName === "function"
                 ? langOptions.customThemeCssFileName(defaultScopeName)
                 : "") || defaultScopeName;
-            const linkHref = `/${
+            const linkHref = `/${config.base||""}/${
               langOptions.outputDir || config.build.assetsDir
             }/${filename}.css`.replace(/\/+(?=\/)/g, "");
             const tag = {
