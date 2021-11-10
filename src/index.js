@@ -356,6 +356,7 @@ export default function themePreprocessorPlugin(options = {}) {
             const tag = {
               tag: "link",
               attrs: {
+                rel: "stylesheet",
                 href: linkHref,
                 id: langOptions.themeLinkTagId,
               },
