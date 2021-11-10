@@ -3,6 +3,7 @@
 /* eslint-disable import/no-unresolved */
 /* eslint-env browser */
 import {
+  basePath,
   assetsDir,
   buildCommand,
   browerPreprocessorOptions,
@@ -45,10 +46,9 @@ export function toggleTheme(opts) {
     options.themeLinkTagId || browerPreprocessorOptions.themeLinkTagId
   );
   const href = options.customLinkHref(
-    `/${(browerPreprocessorOptions.outputDir || assetsDir || "").replace(
-      /(^\/+|\/+$)/g,
-      ""
-    )}/${options.scopeName}.css`
+    `/${basePath || ""}/${
+      browerPreprocessorOptions.outputDir || assetsDir || ""
+    }/${options.scopeName}.css`.replace(/\/+(?=\/)/g, "")
   );
   if (styleLink) {
     // 假如存在id为theme-link-tag 的link标签，直接修改其href

@@ -1,6 +1,6 @@
 {
   "name": "@zougt/vite-plugin-theme-preprocessor",
-  "version": "1.3.9",
+  "version": "1.3.10",
   "description": "css theme preprocessor plugin for vite",
   "license": "MIT",
   "repository": "GitOfZGT/vite-plugin-theme-preprocessor",
@@ -8,6 +8,7 @@
   "homepage": "https://github.com/GitOfZGT/vite-plugin-theme-preprocessor",
   "bugs": "https://github.com/GitOfZGT/vite-plugin-theme-preprocessor/issues",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "engines": {
     "node": ">= 12.0.0"
   },

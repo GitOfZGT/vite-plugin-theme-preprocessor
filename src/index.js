@@ -125,8 +125,10 @@ export default function themePreprocessorPlugin(options = {}) {
         `${targetRsoleved}/toBrowerEnvs.js`,
         `export const browerPreprocessorOptions = ${JSON.stringify(
           browerPreprocessorOptions
-        )};\nexport const assetsDir="${
-          config.build.assetsDir
+        )};\nexport const basePath="${
+          config.base || ""
+        }";\nexport const assetsDir="${
+          config.build.assetsDir || ""
         }";\nexport const buildCommand="${buildCommand}";
         `
       );
@@ -350,7 +352,7 @@ export default function themePreprocessorPlugin(options = {}) {
               (typeof langOptions.customThemeCssFileName === "function"
                 ? langOptions.customThemeCssFileName(defaultScopeName)
                 : "") || defaultScopeName;
-            const linkHref = `/${config.base||""}/${
+            const linkHref = `/${config.base || ""}/${
               langOptions.outputDir || config.build.assetsDir
             }/${filename}.css`.replace(/\/+(?=\/)/g, "");
             const tag = {
