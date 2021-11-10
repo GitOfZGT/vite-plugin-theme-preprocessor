@@ -26,7 +26,14 @@ export function addClassNameToHtmlTag({ scopeName, multipleScopeVars }) {
     document.documentElement.className = currentHtmlClassNames.join(" ");
   }
 }
-
+function createThemeLinkTag({ id, href }) {
+  // 不存在的话，则新建一个
+  const styleLink = document.createElement("link");
+  styleLink.rel = "stylesheet";
+  styleLink.href = href;
+  styleLink.id = id;
+  return styleLink;
+}
 export function toggleTheme(opts) {
   const options = {
     // multipleScopeVars: [],
@@ -42,29 +49,36 @@ export function toggleTheme(opts) {
     addClassNameToHtmlTag(options);
     return;
   }
-  let styleLink = document.getElementById(
-    options.themeLinkTagId || browerPreprocessorOptions.themeLinkTagId
-  );
+  const linkId =
+    options.themeLinkTagId || browerPreprocessorOptions.themeLinkTagId;
+  let styleLink = document.getElementById(linkId);
   const href = options.customLinkHref(
     `/${basePath || ""}/${
       browerPreprocessorOptions.outputDir || assetsDir || ""
     }/${options.scopeName}.css`.replace(/\/+(?=\/)/g, "")
   );
   if (styleLink) {
-    // 假如存在id为theme-link-tag 的link标签，直接修改其href
-    styleLink.href = href;
+    // 假如存在id为theme-link-tag 的link标签，创建一个新的添加上去加载完成后再300毫秒后移除旧的
+    styleLink.id = `${linkId}_old`;
+    const newLink = createThemeLinkTag({ id: linkId, href });
+    if (styleLink.nextSibling) {
+      styleLink.parentNode.insertBefore(newLink, styleLink.nextSibling);
+    } else {
+      styleLink.parentNode.appendChild(newLink);
+    }
+    newLink.onload = () => {
+      setTimeout(() => {
+        styleLink.parentNode.removeChild(styleLink);
+        styleLink = null;
+      }, 300);
+    };
     // 注：如果是removeCssScopeName:true移除了主题文件的权重类名，就可以不用修改className 操作
     if (!browerPreprocessorOptions.removeCssScopeName) {
       addClassNameToHtmlTag(options);
     }
   } else {
     // 不存在的话，则新建一个
-    styleLink = document.createElement("link");
-    styleLink.type = "text/css";
-    styleLink.rel = "stylesheet";
-    styleLink.id =
-      options.themeLinkTagId || browerPreprocessorOptions.themeLinkTagId;
-    styleLink.href = href;
+    styleLink = createThemeLinkTag({ id: linkId, href });
     // 注：如果是removeCssScopeName:true移除了主题文件的权重类名，就可以不用修改className 操作
     if (!browerPreprocessorOptions.removeCssScopeName) {
       addClassNameToHtmlTag(options);
