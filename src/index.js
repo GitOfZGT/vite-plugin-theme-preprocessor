@@ -7,6 +7,7 @@ import stringHash from "string-hash";
 import {
   extractThemeCss,
   addScopnameToHtmlClassname,
+  createPulignParamsFile,
 } from "@zougt/some-loader-utils";
 
 import pack from "../package.json";
@@ -115,6 +116,20 @@ export default function themePreprocessorPlugin(options = {}) {
     configResolved(resolvedConfig) {
       // 存储最终解析的配置
       config = resolvedConfig;
+      let extract = false;
+      processorNames.forEach((lang) => {
+        const langOptions = {
+          ...langDefaultOptions,
+          ...(options[lang] || {}),
+        };
+
+        extract = langOptions.extract;
+      });
+
+      createPulignParamsFile({
+        extract: buildCommand !== "build" ? false : extract,
+      });
+
       const targetRsoleved = require
         .resolve(pack.name, {
           paths: [config.root],
@@ -234,94 +249,48 @@ export default function themePreprocessorPlugin(options = {}) {
       );
     },
 
-    generateBundle(opt, bundle) {
+    generateBundle() {
       if (buildCommand !== "build") {
-        return;
+        return Promise.resolve();
       }
-      // 在资产生成文件之前，从css内容中抽取multipleScopeVars对应的内容
+      // 在资产生成文件之前，抽取multipleScopeVars对应的内容
+      let extract = false;
+      let removeCssScopeName = false;
+      let outputDir = "";
+      let customThemeCssFileName = null;
 
-      const themeMap = {};
+      processorNames.forEach((lang) => {
+        const langOptions = {
+          ...langDefaultOptions,
+          ...(options[lang] || {}),
+        };
+        extract = langOptions.extract;
+        removeCssScopeName = langOptions.removeCssScopeName;
+        outputDir = langOptions.outputDir || config.build.assetsDir;
+        customThemeCssFileName = langOptions.customThemeCssFileName;
+      });
+      if (extract) {
+        return extractThemeCss({
+          removeCssScopeName,
+        }).then(({ themeCss }) => {
+          Object.keys(themeCss).forEach((scopeName) => {
+            const name =
+              (typeof customThemeCssFileName === "function"
+                ? customThemeCssFileName(scopeName)
+                : "") || scopeName;
 
-      for (const filename in bundle) {
-        if (/\.css$/.test(filename)) {
-          let content = (
-            bundle[filename].source ||
-            bundle[filename].code ||
-            ""
-          ).toString();
-          processorNames.forEach((lang) => {
-            const langOptions = {
-              ...langDefaultOptions,
-              ...(options[lang] || {}),
-            };
-
-            if (!langOptions.extract) {
-              return;
-            }
-
-            if (
-              Array.isArray(langOptions.multipleScopeVars) &&
-              langOptions.multipleScopeVars.length
-            ) {
-              const { css, themeCss } = extractThemeCss({
-                css: content,
-                multipleScopeVars: langOptions.multipleScopeVars,
-                removeCssScopeName: langOptions.removeCssScopeName,
-              });
-              const langTheme = themeMap[lang] || {};
-              Object.keys(themeCss).forEach((scopeName) => {
-                langTheme[scopeName] = `${langTheme[scopeName] || ""}${
-                  themeCss[scopeName]
-                }`;
-              });
-              themeMap[lang] = langTheme;
-              content = css;
-            }
+            const fileName = path.posix
+              .join(outputDir, `${name}.css`)
+              .replace(/^[\\/]+/g, "");
+            this.emitFile({
+              type: "asset",
+              fileName,
+              source: themeCss[scopeName],
+            });
           });
-
-          if (bundle[filename].source) {
-            bundle[filename].source = content;
-          }
-
-          if (bundle[filename].code) {
-            bundle[filename].code = content;
-          }
-        }
+        });
       }
-
-      const fileContents = {};
-      Object.keys(themeMap).forEach((lang) => {
-        const langOptions = { ...langDefaultOptions, ...(options[lang] || {}) };
-
-        if (!langOptions.extract) {
-          return;
-        }
-
-        Object.keys(themeMap[lang]).forEach((scopeName) => {
-          const name =
-            (typeof langOptions.customThemeCssFileName === "function"
-              ? langOptions.customThemeCssFileName(scopeName)
-              : "") || scopeName;
-
-          const filename = path.posix
-            .join(
-              langOptions.outputDir || config.build.assetsDir,
-              `${name}.css`
-            )
-            .replace(/^[\\/]+/g, "");
-
-          fileContents[filename] = `${fileContents[filename] || ""}${
-            themeMap[lang][scopeName]
-          }`;
-        });
-      });
-      Object.keys(fileContents).forEach((fileName) => {
-        this.emitFile({
-          type: "asset",
-          fileName,
-          source: fileContents[fileName],
-        });
-      });
+      return Promise.resolve();
     },
 
     transformIndexHtml(html) {
