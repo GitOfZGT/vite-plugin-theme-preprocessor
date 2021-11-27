@@ -8,6 +8,8 @@ import {
   extractThemeCss,
   addScopnameToHtmlClassname,
   createPulignParamsFile,
+  createSetCustomThemeFile,
+  getCurrentPackRequirePath,
 } from "@zougt/some-loader-utils";
 
 import pack from "../package.json";
@@ -28,6 +30,60 @@ export function getModulesScopeGenerater(opt) {
     return `_${name}_${hash}_${lineNumber}`;
   };
 }
+
+function addExtractThemeLinkTag({
+  html,
+  defaultOptions,
+  allmultipleScopeVars,
+  buildCommand,
+  config,
+}) {
+  // 向html中添加抽取的主题css文件的link标签，并在html标签中添加 calssName
+  let newHtml = html;
+  const tags = [];
+  const {
+    themeLinkTagInjectTo,
+    extract,
+    removeCssScopeName,
+    themeLinkTagId,
+    outputDir,
+    defaultScopeName,
+    customThemeCssFileName,
+  } = defaultOptions;
+
+  if (Array.isArray(allmultipleScopeVars) && allmultipleScopeVars.length) {
+    const scopeName = defaultScopeName || allmultipleScopeVars[0].scopeName;
+
+    if (buildCommand !== "build" || !removeCssScopeName) {
+      newHtml = addScopnameToHtmlClassname(newHtml, scopeName);
+    }
+
+    if (buildCommand === "build" && extract && themeLinkTagId) {
+      const filename =
+        (typeof customThemeCssFileName === "function"
+          ? customThemeCssFileName(scopeName)
+          : "") || scopeName;
+      const linkHref = `/${config.base || ""}/${
+        outputDir || config.build.assetsDir
+      }/${filename}.css`.replace(/\/+(?=\/)/g, "");
+      const tag = {
+        tag: "link",
+        attrs: {
+          rel: "stylesheet",
+          href: linkHref,
+          id: themeLinkTagId,
+        },
+        injectTo: themeLinkTagInjectTo,
+      };
+      tags.push(tag);
+    }
+  }
+  return {
+    html: newHtml,
+    tags,
+  };
+}
+
 /**
  * lang : "less" | "scss" | "sass"
  * @param {*} options : { [lang]:{ multipleScopeVars: [{scopeName:"theme-1",path: path.resolve('./vars.less')}], outputDir, defaultScopeName ,extract,removeCssScopeName,customThemeCssFileName,themeLinkTagId,themeLinkTagInjectTo } }
@@ -41,8 +97,7 @@ export default function themePreprocessorPlugin(options = {}) {
   let buildCommand;
   const processorNames = Object.keys(options);
   let browerPreprocessorOptions = {};
-  const langDefaultOptions = {
-    multipleScopeVars: [],
+  let defaultOptions = {
     outputDir: "",
     // 默认取 multipleScopeVars[0].scopeName
     defaultScopeName: "",
@@ -52,7 +107,14 @@ export default function themePreprocessorPlugin(options = {}) {
     themeLinkTagInjectTo: "head",
     removeCssScopeName: false,
     customThemeCssFileName: null,
+
+    arbitraryMode: false,
+    defaultPrimaryColor: "",
+    customThemeOutputPath: "",
+    styleTagId: "custom-theme-tagid",
+    InjectDefaultStyleTagToHtml: true,
   };
+  const allmultipleScopeVars = [];
   return {
     name: "vite-plugin-theme-preprocessor",
     enforce: "pre",
@@ -63,9 +125,10 @@ export default function themePreprocessorPlugin(options = {}) {
 
       const css = conf.css || {};
       const preprocessorOptions = css.preprocessorOptions || {};
-      const allmultipleScopeVars = [];
+
       processorNames.forEach((lang) => {
-        const langOptions = { ...langDefaultOptions, ...(options[lang] || {}) };
+        const langOptions = options[lang] || {};
+        defaultOptions = { ...defaultOptions, ...langOptions };
         browerPreprocessorOptions = langOptions;
         if (
           Array.isArray(langOptions.multipleScopeVars) &&
@@ -74,6 +137,7 @@ export default function themePreprocessorPlugin(options = {}) {
           preprocessorOptions[lang] = {
             ...(preprocessorOptions[lang] || {}),
             multipleScopeVars: langOptions.multipleScopeVars,
+            arbitraryMode: defaultOptions.arbitraryMode,
           };
           langOptions.multipleScopeVars.forEach((item) => {
             const founded = allmultipleScopeVars.find(
@@ -116,18 +180,9 @@ export default function themePreprocessorPlugin(options = {}) {
     configResolved(resolvedConfig) {
       // 存储最终解析的配置
       config = resolvedConfig;
-      let extract = false;
-      processorNames.forEach((lang) => {
-        const langOptions = {
-          ...langDefaultOptions,
-          ...(options[lang] || {}),
-        };
-
-        extract = langOptions.extract;
-      });
 
       createPulignParamsFile({
-        extract: buildCommand !== "build" ? false : extract,
+        extract: buildCommand !== "build" ? false : defaultOptions.extract,
       });
 
       const targetRsoleved = require
@@ -187,7 +242,7 @@ export default function themePreprocessorPlugin(options = {}) {
           const substituteDir = `${targetRsoleved}/dist/substitute`;
           const substitutePreprocessorDir = `${substituteDir}/${resolveName}`;
 
-          if (!fsExtra.existsSync(substitutePreprocessorDir)) {
+          return resetStylePreprocessor({ lang: [langName] }).then(() => {
             // "getLess" || "getSass"
             const funName = `get${
               langName.slice(0, 1).toUpperCase() + langName.slice(1)
@@ -200,6 +255,9 @@ export default function themePreprocessorPlugin(options = {}) {
               `${substituteDir}/preprocessor-substitute-options.js`,
               `${substitutePreprocessorDir}/preprocessor-substitute-options.js`
             );
+            const originalDir = `${path.resolve(
+              "node_modules/.zougtTheme/original"
+            )}`;
             // require('less')时的文件名，如 "index.js"
             const mainFile = resolved
               .replace(resolveDir, "")
@@ -207,12 +265,13 @@ export default function themePreprocessorPlugin(options = {}) {
             // 向 "index.js" 中写上如 "getLess" 的调用
             fsExtra.writeFileSync(
               `${substitutePreprocessorDir}/${mainFile}`,
-              `const nodePreprocessor = require("${pack.name}/original/${resolveName}/${mainFile}");
-              const { ${funName} } =  require("@zougt/some-loader-utils");
-              module.exports = ${funName}({
-                implementation: nodePreprocessor,
-              });
-              `
+              `const nodePreprocessor = require("${originalDir}/${resolveName}/${mainFile}");
+                const { ${funName} } =  require("@zougt/some-loader-utils");
+                module.exports = ${funName}({
+                  arbitraryMode:${defaultOptions.arbitraryMode},
+                  implementation: nodePreprocessor,
+                });
+                `
             );
             // 如果 源less中存在bin，生成一份替代品的bin
             if (fsExtra.existsSync(`${resolveDir}/bin`)) {
@@ -224,27 +283,29 @@ export default function themePreprocessorPlugin(options = {}) {
                   fsExtra.writeFileSync(
                     `${substitutePreprocessorDir}/bin/${name}`,
                     `#!/usr/bin/env node\n"use strict";\n
-                    require("${pack.name}/original/${resolveName}/bin/${name}");
-                  `
+                      require("${originalDir}/${resolveName}/bin/${name}");
+                    `
                   );
                 }
               });
             }
-          }
-          // 替换了处理器的标识
 
-          const isSubstitute = fsExtra.existsSync(
-            `${resolveDir}/preprocessor-substitute-options.js`
-          );
+            // 替换了处理器的标识
 
-          if (!isSubstitute) {
-            // 用less的替代品替换 源 less
-            return fsExtra
-              .move(resolveDir, `${targetRsoleved}/original/${resolveName}`)
-              .then(() => fsExtra.copy(substitutePreprocessorDir, resolveDir));
-          }
+            const isSubstitute = fsExtra.existsSync(
+              `${resolveDir}/preprocessor-substitute-options.js`
+            );
 
-          return Promise.resolve();
+            if (!isSubstitute) {
+              // 用less的替代品替换 源 less
+              return fsExtra
+                .move(resolveDir, `${originalDir}/${resolveName}`)
+                .then(() =>
+                  fsExtra.copy(substitutePreprocessorDir, resolveDir)
+                );
+            }
+            return Promise.resolve();
+          });
         })
       );
     },
@@ -254,22 +315,17 @@ export default function themePreprocessorPlugin(options = {}) {
         return Promise.resolve();
       }
       // 在资产生成文件之前，抽取multipleScopeVars对应的内容
-      let extract = false;
-      let removeCssScopeName = false;
-      let outputDir = "";
-      let customThemeCssFileName = null;
 
-      processorNames.forEach((lang) => {
-        const langOptions = {
-          ...langDefaultOptions,
-          ...(options[lang] || {}),
-        };
-        extract = langOptions.extract;
-        removeCssScopeName = langOptions.removeCssScopeName;
-        outputDir = langOptions.outputDir || config.build.assetsDir;
-        customThemeCssFileName = langOptions.customThemeCssFileName;
-      });
-      if (extract) {
+      const {
+        extract,
+        arbitraryMode,
+        removeCssScopeName,
+        outputDir,
+        customThemeCssFileName,
+      } = defaultOptions;
+
+      if (extract && !arbitraryMode) {
+        // 生产时，非任意模式下抽取对应的主题css
         return extractThemeCss({
           removeCssScopeName,
         }).then(({ themeCss }) => {
@@ -292,68 +348,83 @@ export default function themePreprocessorPlugin(options = {}) {
       }
       return Promise.resolve();
     },
-
+    handleHotUpdate({ server, modules }) {
+      const {
+        arbitraryMode,
+        defaultPrimaryColor,
+        customThemeOutputPath,
+        styleTagId,
+      } = defaultOptions;
+      if (!arbitraryMode) {
+        return;
+      }
+      // processorNames.
+      const hasCssUpdate = modules.some((item) =>
+        processorNames.some((lang) => {
+          const isSass =
+            ["scss", "sass"].includes(lang) &&
+            (item.id.includes(".scss") || item.id.includes(".sass"));
+          if (isSass) {
+            return true;
+          }
+          const isLess = lang === "less" && item.id.includes(".less");
+          return isLess;
+        })
+      );
+      if (hasCssUpdate) {
+        createSetCustomThemeFile({
+          defaultPrimaryColor,
+          customThemeOutputPath,
+          styleTagId,
+        })
+        // .then(({ styleContent }) => {
+          
+        // });
+      }
+    },
     transformIndexHtml(html) {
-      // 向html中添加抽取的主题css文件的link标签，并在html标签中添加 calssName
-      let newHtml = html;
-      const tags = [];
-      processorNames.forEach((lang) => {
-        const langOptions = { ...langDefaultOptions, ...(options[lang] || {}) };
-
-        if (
-          Array.isArray(langOptions.multipleScopeVars) &&
-          langOptions.multipleScopeVars.length
-        ) {
-          const defaultScopeName =
-            langOptions.defaultScopeName ||
-            langOptions.multipleScopeVars[0].scopeName;
-
-          if (buildCommand !== "build" || !langOptions.removeCssScopeName) {
-            newHtml = addScopnameToHtmlClassname(newHtml, defaultScopeName);
-          }
-
-          if (
-            buildCommand === "build" &&
-            langOptions.extract &&
-            langOptions.themeLinkTagId
-          ) {
-            const filename =
-              (typeof langOptions.customThemeCssFileName === "function"
-                ? langOptions.customThemeCssFileName(defaultScopeName)
-                : "") || defaultScopeName;
-            const linkHref = `/${config.base || ""}/${
-              langOptions.outputDir || config.build.assetsDir
-            }/${filename}.css`.replace(/\/+(?=\/)/g, "");
-            const tag = {
-              tag: "link",
-              attrs: {
-                rel: "stylesheet",
-                href: linkHref,
-                id: langOptions.themeLinkTagId,
-              },
-              injectTo: langOptions.themeLinkTagInjectTo,
-            };
-
-            if (
-              tags.some(
-                (item) =>
-                  item.tag === tag.tag &&
-                  item.attrs.href === tag.attrs.href &&
-                  item.attrs.id === tag.attrs.id &&
-                  item.injectTo === tag.injectTo
-              )
-            ) {
-              return;
-            }
-
-            tags.push(tag);
-          }
+      const {
+        arbitraryMode,
+        defaultPrimaryColor,
+        customThemeOutputPath,
+        styleTagId,
+        InjectDefaultStyleTagToHtml,
+      } = defaultOptions;
+      if (arbitraryMode) {
+        // 任意模式下，获取主题css生成一个setCustomTheme.js，并添加css到html
+        const targetRsoleved = getCurrentPackRequirePath();
+        const dirName = "extractTheme";
+        if (!fsExtra.existsSync(`${targetRsoleved}/${dirName}`)) {
+          return null;
         }
+        return createSetCustomThemeFile({
+          defaultPrimaryColor,
+          customThemeOutputPath,
+          styleTagId,
+        }).then(({ styleContent }) => {
+          const tag = {
+            tag: "style",
+            attrs: {
+              id: styleTagId,
+              type: "text/css",
+            },
+            injectTo: "body",
+            children: styleContent,
+          };
+          return {
+            html,
+            tags: InjectDefaultStyleTagToHtml ? [tag] : [],
+          };
+        });
+      }
+      // 非任意模式，添加默认的抽取的主题css的link
+      return addExtractThemeLinkTag({
+        html,
+        defaultOptions,
+        allmultipleScopeVars,
+        buildCommand,
+        config,
       });
-      return {
-        html: newHtml,
-        tags,
-      };
     },
   };
 }
@@ -366,12 +437,6 @@ export function resetStylePreprocessor(options = {}) {
   if (!Array.isArray(options.langs) || !options.langs.length) {
     return Promise.resolve();
   }
-  const targetRsoleved = require
-    .resolve(pack.name, {
-      paths: [options.root || process.cwd()],
-    })
-    .replace(/[\\/]dist[\\/]index\.js$/, "");
-
   options.langs.forEach((lang) => {
     const langName = lang === "scss" ? "sass" : lang;
     let isSubstitute = false;
@@ -398,7 +463,10 @@ export function resetStylePreprocessor(options = {}) {
     if (isSubstitute) {
       // 替换处理器
       fsExtra.removeSync(resolveDir);
-      fsExtra.moveSync(`${targetRsoleved}/original/${resolveName}`, resolveDir);
+      fsExtra.moveSync(
+        `${path.resolve("node_modules/.zougtTheme/original")}/${resolveName}`,
+        resolveDir
+      );
     }
   });
   return Promise.resolve();
