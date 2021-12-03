@@ -17,6 +17,19 @@
 - [getLess](https://github.com/GitOfZGT/some-loader-utils#getLess)，本质上是对[less 包](https://github.com/less/less.js)的扩展
 - [getSass](https://github.com/GitOfZGT/some-loader-utils#getSass)，本质上是对[sass 包](https://github.com/sass/dart-sass)的扩展
 
+**2021-12-03:** 
+
+v1.4.0+ 将支持 arbitraryMode 来启用动态主题的实现，目前已发布测试版 v1.4.0-beta.3 
+
+特点：使用成本低、无关框架、不是使用Css3 vars
+
+![](https://img-blog.csdnimg.cn/be6e9af4ce0c493f8c8c9caf4a3b34c3.gif)
+
+使用文档持续补上，可先查看这个demo：[vite-dynamictheme-antd-vue-demo](https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo)
+
+
+# 以下是原预设主题的使用文档与原理
+
 ## 案例效果图
 
 ![主题切换效果](https://img-blog.csdnimg.cn/20210518124127696.gif)
