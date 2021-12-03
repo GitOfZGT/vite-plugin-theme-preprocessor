@@ -1,6 +1,6 @@
 {
   "name": "@zougt/vite-plugin-theme-preprocessor",
-  "version": "1.4.0-a.2",
+  "version": "1.4.0-beta.3",
   "description": "css theme preprocessor plugin for vite",
   "license": "MIT",
   "repository": "GitOfZGT/vite-plugin-theme-preprocessor",
@@ -30,8 +30,8 @@
     "dist"
   ],
   "dependencies": {
-    "@zougt/some-loader-utils": "^1.4.0-a.2",
-    "fs-extra": "^9.1.0",
+    "@zougt/some-loader-utils": "^1.4.0-beta.2",
+    "fs-extra": "^10.0.0",
     "string-hash": "^1.1.3"
   },
   "devDependencies": {
