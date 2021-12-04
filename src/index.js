@@ -33,7 +33,6 @@ let preCustomThemeOutputPath = "";
  */
 
 export default function themePreprocessorPlugin(options = {}) {
-
   let config = {
     root: process.cwd(),
   };
@@ -49,8 +48,13 @@ export default function themePreprocessorPlugin(options = {}) {
   let browerPreprocessorOptions = {};
   let defaultOptions = {
     outputDir: "",
+    // multipleScopeVars:[{scopeName:"theme-default",path:""}],
     // 默认取 multipleScopeVars[0].scopeName
     defaultScopeName: "",
+    // 强制将一些颜色值的样式作为主题样式
+    includeStyleWithColors: [
+      // {color:"#ffffff",inGradient:false}
+    ],
     extract: true,
     themeLinkTagId: "theme-link-tag",
     // "head"||"head-prepend" || "body" ||"body-prepend"
@@ -66,10 +70,6 @@ export default function themePreprocessorPlugin(options = {}) {
     // style标签的id
     styleTagId: "custom-theme-tagid",
     InjectDefaultStyleTagToHtml: true,
-    // 强制将一些颜色值的样式作为主题样式
-    includeStyleWithColors: [
-      // {color:"#ffffff",inGradient:false}
-    ],
   };
   const allmultipleScopeVars = [];
   let cacheThemeStyleContent = "";
@@ -172,7 +172,10 @@ export default function themePreprocessorPlugin(options = {}) {
         }";\nexport const buildCommand="${buildCommand}";
         `
       );
-      if (preCustomThemeOutputPath !== defaultOptions.customThemeOutputPath) {
+      if (
+        defaultOptions.arbitraryMode &&
+        preCustomThemeOutputPath !== defaultOptions.customThemeOutputPath
+      ) {
         preCustomThemeOutputPath = defaultOptions.customThemeOutputPath;
         return createSetCustomTheme({
           ...defaultOptions,
@@ -314,7 +317,10 @@ export default function themePreprocessorPlugin(options = {}) {
       return null;
     },
     renderChunk(code) {
-      if (code.includes(setCustomThemeCodeReplacer)) {
+      if (
+        defaultOptions.arbitraryMode &&
+        code.includes(setCustomThemeCodeReplacer)
+      ) {
         return createSetCustomTheme({
           ...defaultOptions,
           buildCommand,
@@ -459,7 +465,11 @@ function themePreprocessorHmrPlugin() {
       parentApi = parentPlugin.api;
     },
     transform(code, id) {
-      if (/\.(less|scss|sass)(\?.+)?/.test(id)) {
+      const defaultOptions = parentApi.getOptions();
+      if (
+        defaultOptions.arbitraryMode &&
+        /\.(less|scss|sass)(\?.+)?/.test(id)
+      ) {
         transformStyleFiles.add(id);
         if (
           hotUpdateStyleFiles.size &&
@@ -467,7 +477,7 @@ function themePreprocessorHmrPlugin() {
         ) {
           getThemeStyleContent();
           createSetCustomTheme({
-            ...parentApi.getOptions(),
+            ...defaultOptions,
             buildCommand,
             cacheThemeStyleContent,
           }).then((result) => {
