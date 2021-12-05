@@ -28,6 +28,8 @@ yarn add  color @zougt/vite-plugin-theme-preprocessor @zougt/some-loader-utils -
 
 **vite.config.js**
 
+> 注意：以下的配置适用于 动态主题模式 ， 预设主题模式 请往文档下面对应的看。
+
 ```js
 import { defineConfig } from "vite";
 import {
@@ -146,6 +148,8 @@ yarn add @zougt/vite-plugin-theme-preprocessor -D
 
 **vite.config.js**
 
+> 注意：以下的配置适用于 预设主题模式。
+
 ```js
 import themePreprocessorPlugin from "@zougt/vite-plugin-theme-preprocessor";
 export default {
@@ -209,7 +213,7 @@ export default {
 **在线切换主题**
 
 ```js
-import { toggleTheme } from "@zougt/vite-plugin-theme-preprocessor/dist/browser-utils.js";
+import { toggleTheme } from "@zougt/vite-plugin-theme-preprocessor/dist/browser-utils";
 
 toggleTheme({
   scopeName: "theme-default",
