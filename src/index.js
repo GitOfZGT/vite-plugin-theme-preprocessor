@@ -211,8 +211,13 @@ export default function themePreprocessorPlugin(options = {}) {
           const resolveDir = `${pathnames
             .slice(0, index)
             .join("/")}/${resolveName}`;
-
-          if (!fsExtra.existsSync(resolveDir)) {
+          const originalDir = `${path.resolve(
+            "node_modules/.zougtTheme/original"
+          )}`;
+          if (
+            !fsExtra.existsSync(resolveDir) &&
+            !fsExtra.existsSync(`${originalDir}/${resolveName}`)
+          ) {
             throw new Error(
               `Preprocessor dependency "${langName}" not found. Did you install it?`
             );
@@ -228,15 +233,20 @@ export default function themePreprocessorPlugin(options = {}) {
             }`;
 
             // 在substitute生成替代包
-            fsExtra.copySync(resolveDir, substitutePreprocessorDir);
-            fsExtra.removeSync(`${substitutePreprocessorDir}/node_modules`);
+            const copyPreFiles = fsExtra.readdirSync(resolveDir) || [];
+            copyPreFiles.forEach((name) => {
+              if (name !== "node_modules" && name !== "bin") {
+                fsExtra.copySync(
+                  `${resolveDir}/${name}`,
+                  `${substitutePreprocessorDir}/${name}`
+                );
+              }
+            });
             fsExtra.copySync(
               `${substituteDir}/preprocessor-substitute-options.js`,
               `${substitutePreprocessorDir}/preprocessor-substitute-options.js`
             );
-            const originalDir = `${path.resolve(
-              "node_modules/.zougtTheme/original"
-            )}`;
+
             // require('less')时的文件名，如 "index.js"
             const mainFile = resolved
               .replace(resolveDir, "")
@@ -256,21 +266,21 @@ export default function themePreprocessorPlugin(options = {}) {
                 `
             );
             // 如果 源less中存在bin，生成一份替代品的bin
-            if (fsExtra.existsSync(`${resolveDir}/bin`)) {
-              fsExtra.readdirSync(`${resolveDir}/bin`).forEach((name) => {
-                if (fsExtra.statSync(`${resolveDir}/bin/${name}`).isFile()) {
-                  if (!fsExtra.existsSync(`${substitutePreprocessorDir}/bin`)) {
-                    fsExtra.mkdirSync(`${substitutePreprocessorDir}/bin`);
-                  }
-                  fsExtra.writeFileSync(
-                    `${substitutePreprocessorDir}/bin/${name}`,
-                    `#!/usr/bin/env node\n"use strict";\n
-                      require("${originalDir}/${resolveName}/bin/${name}");
-                    `
-                  );
-                }
-              });
-            }
+            // if (fsExtra.existsSync(`${resolveDir}/bin`)) {
+            //   fsExtra.readdirSync(`${resolveDir}/bin`).forEach((name) => {
+            //     if (fsExtra.statSync(`${resolveDir}/bin/${name}`).isFile()) {
+            //       if (!fsExtra.existsSync(`${substitutePreprocessorDir}/bin`)) {
+            //         fsExtra.mkdirSync(`${substitutePreprocessorDir}/bin`);
+            //       }
+            //       fsExtra.writeFileSync(
+            //         `${substitutePreprocessorDir}/bin/${name}`,
+            //         `#!/usr/bin/env node\n"use strict";\n
+            //           require("${originalDir}/${resolveName}/bin/${name}");
+            //         `
+            //       );
+            //     }
+            //   });
+            // }
 
             // 替换了处理器的标识
 
@@ -280,11 +290,24 @@ export default function themePreprocessorPlugin(options = {}) {
 
             if (!isSubstitute) {
               // 用less的替代品替换 源 less
-              return fsExtra
-                .move(resolveDir, `${originalDir}/${resolveName}`)
-                .then(() =>
-                  fsExtra.copy(substitutePreprocessorDir, resolveDir)
-                );
+              const moveFiles = fsExtra.readdirSync(resolveDir) || [];
+              moveFiles.forEach((name) => {
+                if (name !== "node_modules" && name !== "bin") {
+                  fsExtra.moveSync(
+                    `${resolveDir}/${name}`,
+                    `${originalDir}/${resolveName}/${name}`
+                  );
+                }
+              });
+              const copyFiles = fsExtra.readdirSync(substitutePreprocessorDir);
+              copyFiles.forEach((name) => {
+                if (name !== "node_modules" && name !== "bin") {
+                  fsExtra.copySync(
+                    `${substitutePreprocessorDir}/${name}`,
+                    `${resolveDir}/${name}`
+                  );
+                }
+              });
             }
             return Promise.resolve();
           });
