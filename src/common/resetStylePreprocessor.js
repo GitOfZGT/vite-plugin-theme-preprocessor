@@ -40,7 +40,7 @@ export function resetStylePreprocessor(options = {}) {
         const preprocessorFiles = fsExtra.readdirSync(resolveDir) || [];
 
         preprocessorFiles.forEach((name) => {
-          if (name !== "node_modules") {
+          if (name !== "node_modules"&&name!=='bin') {
             fsExtra.removeSync(`${resolveDir}/${name}`);
           }
         });
@@ -51,8 +51,8 @@ export function resetStylePreprocessor(options = {}) {
       if (fsExtra.existsSync(originalPreDir)) {
         const originalFiles = fsExtra.readdirSync(originalPreDir) || [];
         originalFiles.forEach((name) => {
-          if (name !== "node_modules") {
-            fsExtra.moveSync(
+          if (name !== "node_modules"&&name!=='bin') {
+            fsExtra.copySync(
               `${originalPreDir}/${name}`,
               `${resolveDir}/${name}`
             );

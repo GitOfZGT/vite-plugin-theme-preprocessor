@@ -1,38 +1,129 @@
 # @zougt/vite-plugin-theme-preprocessor
 
-一个[vite v2.0+](https://cn.vitejs.dev/)插件，用于实现多个 `less`、`sass` 变量文件编译出多主题的 css
+一个[vite v2.0+](https://cn.vitejs.dev/)插件，让你轻松实现基于`less`、`sass`的 web 应用在线动态主题切换。
 
-使得基于`less`、`sass`以及`css modules`的主题样式在线动态切换变得很简单
+特点：
 
-使用了插件钩子：
+- 使用成本很低
+- 不限 ui 框架，Element-ui、iview、Ant-design 等等等（只要基于 less/sass）
+- 不依赖 css3 vars
+- 浏览器兼容性良好（IE9+ ?，待验证 ，但 vite 构建的产物最低 Polyfill 到 IE11，需更低的，你可以用 webpack 版本的插件[@zougt/some-loader-utils](https://github.com/GitOfZGT/some-loader-utils)，所以兼容性问题取决用的框架）
 
-- config
-- configResolved
-- buildStart
-- generateBundle
-- transformIndexHtml
+## 动态主题模式
 
-核心功能是 [@zougt/some-loader-utils](https://github.com/GitOfZGT/some-loader-utils)提供的 `getLess` 和 `getSass` ，目前没有 `stylus`的需求
+> v1.4.0 + 支持
 
-- [getLess](https://github.com/GitOfZGT/some-loader-utils#getLess)，本质上是对[less 包](https://github.com/less/less.js)的扩展
-- [getSass](https://github.com/GitOfZGT/some-loader-utils#getSass)，本质上是对[sass 包](https://github.com/sass/dart-sass)的扩展
+DEMO: [https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo](https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo)
 
-**2021-12-03:** 
+![效果图](https://img-blog.csdnimg.cn/9bee30d711c54933a7e4ac0e28cdb7c3.gif)
 
-v1.4.0+ 将支持 arbitraryMode 来启用动态主题的实现，目前已发布测试版 v1.4.0-beta.3 
+安装与使用
 
-特点：使用成本低、无关框架、不是使用Css3 vars
+```bash
+# use pnpm （or npm）
+pnpm install color @zougt/vite-plugin-theme-preprocessor @zougt/some-loader-utils -D
+# use yarn
+yarn add  color @zougt/vite-plugin-theme-preprocessor @zougt/some-loader-utils -D
+```
 
-![](https://img-blog.csdnimg.cn/be6e9af4ce0c493f8c8c9caf4a3b34c3.gif)
+**vite.config.js**
 
-使用文档持续补上，可先查看这个demo：[vite-dynamictheme-antd-vue-demo](https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo)
+```js
+import { defineConfig } from "vite";
+import {
+  themePreprocessorPlugin,
+  themePreprocessorHmrPlugin,
+} from "@zougt/vite-plugin-theme-preprocessor";
+import path from "path";
+export default defineConfig({
+  server: {
+    port: 3300,
+    watch: {
+      // 热更新时必需的，希望监听setCustomTheme.js
+      ignored: ["!**/node_modules/**/setCustomTheme.js"],
+    },
+  },
+  plugins: [
+    // 创建动态主题切换
+    themePreprocessorPlugin({
+      less: {
+        // 启用任意主题色模式
+        arbitraryMode: true,
+        // 默认的主题色，用于对其他颜色值形成对比值，通常与 src/theme/theme-vars.less 中的一个主题色相同，也可以不相同，就看是不是你想要的效果
+        defaultPrimaryColor: "#512da7",
+        // 只需提供一组变量文件，变量文件内容不应该夹带样式代码，设定上只需存在变量
+        multipleScopeVars: [
+          {
+            // 必需
+            scopeName: "theme-default",
+            // path 和 varsContent 必选一个
+            path: path.resolve("src/theme/theme-vars.less"),
+            // varsContent参数等效于 path文件的内容 ，可以让 defaultPrimaryColor 与 "@primary-color"值只写一遍， varsContent 与 path 选一个使用
+            // varsContent:`@primary-color:${defaultPrimaryColor};`
+          },
+        ],
+        // css中不是由主题色变量生成的颜色，也让它抽取到主题css内，可以提高权重
+        includeStyleWithColors: [
+          {
+            color: "#ffffff",
+            // 此类颜色的是否跟随主题色梯度变化，默认false
+            // inGradient: true,
+          },
+        ],
+      },
+      // scss:{
 
+      // },
+    }),
+    // 主题热更新，不得已分开插件，因为需要vite插件顺序enforce
+    themePreprocessorHmrPlugin(),
+  ],
+});
+```
 
-# 以下是原预设主题的使用文档与原理
+**src/theme/theme-vars.less**
 
-## 案例效果图
+```css
+/*说明：此文件不应该被其他@import，此文件的变量并不是来设置项目的主题（当然，你可以作为加载时的默认主题），主要作用是，这里的变量值只要与项目的原变量值有差别，编译后就会抽取跟随主题色梯度变化的css*/
 
-![主题切换效果](https://img-blog.csdnimg.cn/20210518124127696.gif)
+/*注意（重要）：此文件的内容一旦固定下来就不需要改，在线动态切换主题，调用setCustomTheme方法即可*/
+
+/*注意（强调）：变量值改动会影响 gradientReplacer 和 targetValueReplacer 的可用属性的变化，所以内容一旦固定下来就不需要改（强调）*/
+
+/*主题色，通常与 themePreprocessorPlugin 的 defaultPrimaryColor 相同， 使用setCustomTheme({primaryColor})切换*/
+@primary-color: #512da7;
+
+/*与此颜色对应的样式，默认情况也会跟主色变化的，要切换它对应的梯度颜色，使用setCustomTheme({gradientReplacer:{"#F7D06B"}})切换 */
+@alert-success-bg-color: #F7D06B;
+
+/*圆角值，尽量与原值差别大一点，方便分析 targetValueReplacer 的可用属性，非颜色值的切换，可以使用 setCustomTheme({targetValueReplacer:{"6px"}}) 精准替换*/
+@border-radius-base: 6px;
+```
+
+**在线切换主题**
+
+```js
+import Color from "color";
+// "@setCustomTheme" 是 themePreprocessorPlugin 提供的模块，setCustomTheme的参数必须提供Color模块，至于为什么不把 Color 直接依赖进去是有原因的
+import setCustomTheme from "@setCustomTheme";
+// 设置任意主题色既可
+setCustomTheme({
+  Color,
+  primaryColor: "#FF005A",
+});
+```
+
+**动态主题模式的原理**
+
+一言难尽
+
+## 预设主题模式
+
+预设多种主题，其实也可以用动态主题模式来做，如需类似效果图中有暗黑主题的，可能使用此模式更加方便
+
+DEMO: [https://github.com/GitOfZGT/dynamic-theme-demos/tree/master/projects/vite-antd-vue-preset-theme](https://github.com/GitOfZGT/dynamic-theme-demos/tree/master/projects/vite-antd-vue-preset-theme)
+
+![效果图](https://img-blog.csdnimg.cn/caa3ccb9949a4fc4a6a8c7442291ed07.gif)
 
 ## 安装与使用
 
@@ -51,15 +142,26 @@ export default {
   plugins: [
     themePreprocessorPlugin({
       scss: {
-        // 预处理器的变量文件
+        // 是否启用任意主题色模式，这里不启用
+        arbitraryMode: false,
+        // 提供多组变量文件
         multipleScopeVars: [
           {
             scopeName: "theme-default",
+            // 变量文件内容不应该夹带样式代码，设定上只需存在变量
             path: path.resolve("src/theme/default-vars.scss"),
           },
           {
             scopeName: "theme-mauve",
             path: path.resolve("src/theme/mauve-vars.scss"),
+          },
+        ],
+        // css中不是由主题色变量生成的颜色，也让它抽取到主题css内，可以提高权重
+        includeStyleWithColors: [
+          {
+            color: "#ffffff",
+            // 此类颜色的是否跟随主题色梯度变化，默认false
+            // inGradient: true,
           },
         ],
         // 默认取 multipleScopeVars[0].scopeName
@@ -94,7 +196,39 @@ export default {
 };
 ```
 
-## 多主题编译示例（以 sass 为例）
+**在线切换主题**
+
+```js
+import { toggleTheme } from "@zougt/vite-plugin-theme-preprocessor/dist/browser-utils.js";
+
+toggleTheme({
+  scopeName: "theme-default",
+  // 可选，link的href处理，看情况用， 当启用 themePreprocessorPlugin 的 extract后才需要
+  // customLinkHref: (href) => href,
+  // 可选，默认对应 themePreprocessorPlugin 的 themeLinkTagId
+  // themeLinkTagId: "theme-link-tag",
+  // 可选 "head" || "body"
+  // themeLinkTagInjectTo: "head",
+  // 可选，对应 themePreprocessorPlugin 的 multipleScopeVars
+  // multipleScopeVars
+});
+```
+
+为确保 toggleTheme 的一些默认参数是最新，需要在 vite.config.js 按如下配置
+
+```js
+// vite.config.js
+export default {
+  optimizeDeps: {
+    // 排除 browser-utils.js 在vite的缓存依赖
+    exclude: ["@zougt/vite-plugin-theme-preprocessor/dist/browser-utils"],
+  },
+};
+```
+
+**预设多主题编译原理示例（以 sass 为例）**
+
+>  变量文件内容不应该夹带样式代码，设定上只需存在变量
 
 ```scss
 //src/theme/default-vars.scss
@@ -109,6 +243,9 @@ $primary-color: #0081ff !default;
 //src/theme/mauve-vars.scss
 $primary-color: #9c26b0;
 ```
+
+
+其他使用了变量的文件
 
 ```scss
 //src/components/Button/style.scss
@@ -176,37 +313,41 @@ src/components/Button/style.css
 }
 ```
 
-## 在线切换主题 css 文件
+## 一些说明
+
+使用了插件钩子：
+
+- config
+- configResolved
+- buildStart
+- generateBundle
+- transformIndexHtml
+
+核心功能是 [@zougt/some-loader-utils](https://github.com/GitOfZGT/some-loader-utils)提供的 `getLess` 和 `getSass` ，目前没有 `stylus`的需求
+
+- [getLess](https://github.com/GitOfZGT/some-loader-utils#getLess)，本质上是对[less 包](https://github.com/less/less.js)的扩展
+- [getSass](https://github.com/GitOfZGT/some-loader-utils#getSass)，本质上是对[sass 包](https://github.com/sass/dart-sass)的扩展
+
+
+### includeStyleWithColors
+
+可以将某种不是由主题变量生成的颜色都抽取到主题 css 中，可能比 multipleScopeVars[].includeStyles 更加方便解决一些样式权重问题
+
+> v1.4.0+ ， 动态主题模式和预设主题模式均可用
 
 ```js
-import { toggleTheme } from "@zougt/vite-plugin-theme-preprocessor/dist/browser-utils.js";
-
-toggleTheme({
-  scopeName: "theme-default",
-  // 可选，link的href处理，看情况用， 当启用 themePreprocessorPlugin 的 extract后才需要
-  // customLinkHref: (href) => href,
-  // 可选，默认对应 themePreprocessorPlugin 的 themeLinkTagId
-  // themeLinkTagId: "theme-link-tag",
-  // 可选 "head" || "body"
-  // themeLinkTagInjectTo: "head",
-  // 可选，对应 themePreprocessorPlugin 的 multipleScopeVars
-  // multipleScopeVars
+themePreprocessorPlugin({
+  // css中不是由主题色变量生成的颜色，也让它抽取到主题css内，可以提高权重
+  includeStyleWithColors: [
+    {
+      color: "#ffffff",
+    },
+  ],
 });
 ```
-
-为确保 toggleTheme 的一些默认参数是最新，需要在vite.config.js按如下配置
-
-```js
-// vite.config.js
-export default {
-  optimizeDeps: {
-    // 排除 browser-utils.js 在vite的缓存依赖
-    exclude: ["@zougt/vite-plugin-theme-preprocessor/dist/browser-utils"],
-  },
-};
-```
-
 ### multipleScopeVars[].includeStyles
+
+> 只能用在预设主题模式
 
 Type: `Object`
 
