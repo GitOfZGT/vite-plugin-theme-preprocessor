@@ -2,6 +2,8 @@
 
 一个[vite v2.0+](https://cn.vitejs.dev/)插件，让你轻松实现基于`less`、`sass`的 web 应用在线动态主题切换。
 
+有[动态主题模式](#动态主题模式)和[预设主题模式](#预设主题模式)
+
 特点：
 
 - 使用成本很低
@@ -13,11 +15,11 @@
 
 > v1.4.0 + 支持
 
-这里以less为例，同样适用于scss。
+可用颜色板选择任意的主题色，会自动处理项目中包括组件库涉及的梯度颜色替换，这里以less为例，同样适用于scss。
 
 DEMO: [https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo](https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo)
 
-![效果图](https://img-blog.csdnimg.cn/9bee30d711c54933a7e4ac0e28cdb7c3.gif)
+![效果图](https://img-blog.csdnimg.cn/9bee30d711c54933a7e4ac0e28cdb7c3.gif#pic_center)
 
 安装与使用
 
