@@ -17,7 +17,7 @@
 
 可用颜色板选择任意的主题色，会自动处理项目中包括组件库涉及的梯度颜色替换，这里以less为例，同样适用于scss。
 
-DEMO: [https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo](https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo)
+[在线DEMO](https://gitofzgt.github.io/vite-dynamictheme-antd-vue-demo/)  [在线DEMO源码](https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo)
 
 ![效果图](https://img-blog.csdnimg.cn/9bee30d711c54933a7e4ac0e28cdb7c3.gif#pic_center)
 
@@ -137,7 +137,7 @@ npx z-theme inspect
 
 预设多种主题，其实也可以用动态主题模式来做，如需类似效果图中有暗黑主题的，可能使用此模式更加方便
 
-DEMO: [https://github.com/GitOfZGT/dynamic-theme-demos/tree/master/projects/vite-antd-vue-preset-theme](https://github.com/GitOfZGT/dynamic-theme-demos/tree/master/projects/vite-antd-vue-preset-theme)
+[在线DEMO](https://gitofzgt.github.io/dynamic-theme-demos/vite-antd-vue-preset-theme/) [在线DEMO源码](https://github.com/GitOfZGT/dynamic-theme-demos/tree/master/projects/vite-antd-vue-preset-theme)
 
 ![效果图](https://img-blog.csdnimg.cn/caa3ccb9949a4fc4a6a8c7442291ed07.gif)
 
