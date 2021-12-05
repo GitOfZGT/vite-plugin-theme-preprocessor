@@ -38,7 +38,7 @@ export function resetStylePreprocessor(options = {}) {
       // 替换处理器
       if (fsExtra.existsSync(resolveDir)) {
         const preprocessorFiles = fsExtra.readdirSync(resolveDir) || [];
-      
+
         preprocessorFiles.forEach((name) => {
           if (name !== "node_modules") {
             fsExtra.removeSync(`${resolveDir}/${name}`);

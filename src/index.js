@@ -45,7 +45,7 @@ export default function themePreprocessorPlugin(options = {}) {
   const customThemeOutputPath = `${targetRsoleved}/setCustomTheme.js`;
   let buildCommand;
   const processorNames = Object.keys(options);
-  let browerPreprocessorOptions = {};
+
   let defaultOptions = {
     outputDir: "",
     // multipleScopeVars:[{scopeName:"theme-default",path:""}],
@@ -100,7 +100,6 @@ export default function themePreprocessorPlugin(options = {}) {
       processorNames.forEach((lang) => {
         const langOptions = options[lang] || {};
         defaultOptions = { ...defaultOptions, ...langOptions };
-        browerPreprocessorOptions = langOptions;
         if (
           Array.isArray(langOptions.multipleScopeVars) &&
           langOptions.multipleScopeVars.length
@@ -150,6 +149,11 @@ export default function themePreprocessorPlugin(options = {}) {
     configResolved(resolvedConfig) {
       // 存储最终解析的配置
       config = resolvedConfig;
+
+      const browerPreprocessorOptions = {
+        ...defaultOptions,
+        multipleScopeVars: allmultipleScopeVars,
+      };
 
       createPulignParamsFile({
         extract: buildCommand !== "build" ? false : defaultOptions.extract,
@@ -226,7 +230,7 @@ export default function themePreprocessorPlugin(options = {}) {
           const substituteDir = `${targetRsoleved}/dist/substitute`;
           const substitutePreprocessorDir = `${substituteDir}/${resolveName}`;
 
-          return resetStylePreprocessor({ lang: [langName] }).then(() => {
+          return resetStylePreprocessor({ langs: [langName] }).then(() => {
             // "getLess" || "getSass"
             const funName = `get${
               langName.slice(0, 1).toUpperCase() + langName.slice(1)
@@ -293,7 +297,7 @@ export default function themePreprocessorPlugin(options = {}) {
               const moveFiles = fsExtra.readdirSync(resolveDir) || [];
               moveFiles.forEach((name) => {
                 if (name !== "node_modules" && name !== "bin") {
-                  fsExtra.moveSync(
+                  fsExtra.copySync(
                     `${resolveDir}/${name}`,
                     `${originalDir}/${resolveName}/${name}`
                   );
@@ -437,7 +441,7 @@ export default function themePreprocessorPlugin(options = {}) {
                 : "") || scopeName;
 
             const fileName = path.posix
-              .join(outputDir, `${name}.css`)
+              .join(outputDir || config.build.assetsDir, `${name}.css`)
               .replace(/^[\\/]+/g, "");
             this.emitFile({
               type: "asset",

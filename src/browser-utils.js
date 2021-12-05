@@ -84,8 +84,11 @@ export function toggleTheme(opts) {
       addClassNameToHtmlTag(options);
     }
     document[
-      options.themeLinkTagInjectTo ||
-        browerPreprocessorOptions.themeLinkTagInjectTo.replace("-prepend", "")
+      (
+        options.themeLinkTagInjectTo ||
+        browerPreprocessorOptions.themeLinkTagInjectTo ||
+        ""
+      ).replace("-prepend", "")
     ].append(styleLink);
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@zougt/vite-plugin-theme-preprocessor",
-  "version": "1.4.0-beta.5",
+  "version": "1.4.0-beta.7",
   "description": "css theme preprocessor plugin for vite",
   "license": "MIT",
   "repository": "GitOfZGT/vite-plugin-theme-preprocessor",
