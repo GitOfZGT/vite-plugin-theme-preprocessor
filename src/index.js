@@ -41,7 +41,7 @@ export default function themePreprocessorPlugin(options = {}) {
     .resolve(pack.name, {
       paths: [process.cwd()],
     })
-    .replace(/[\\/]dist[\\/]index\.js$/, "");
+    .replace(/[\\/]dist[\\/]index\.js$/, "").replace(/\\/g,'/');
   const customThemeOutputPath = `${targetRsoleved}/setCustomTheme.js`;
   let buildCommand;
   const processorNames = Object.keys(options);
@@ -163,7 +163,7 @@ export default function themePreprocessorPlugin(options = {}) {
         .resolve(pack.name, {
           paths: [config.root],
         })
-        .replace(/[\\/]index\.js$/, "");
+        .replace(/[\\/]index\.js$/, "").replace(/\\/g,'/');
       // 将一些参数打入到 toBrowerEnvs.js , 由brower-utils.js 获取
       fsExtra.writeFileSync(
         `${packRoot}/toBrowerEnvs.js`,
@@ -215,9 +215,9 @@ export default function themePreprocessorPlugin(options = {}) {
           const resolveDir = `${pathnames
             .slice(0, index)
             .join("/")}/${resolveName}`;
-          const originalDir = `${path.resolve(
+          const originalDir = path.resolve(
             "node_modules/.zougtTheme/original"
-          )}`;
+          ) .replace(/\\/g, "/");
           if (
             !fsExtra.existsSync(resolveDir) &&
             !fsExtra.existsSync(`${originalDir}/${resolveName}`)

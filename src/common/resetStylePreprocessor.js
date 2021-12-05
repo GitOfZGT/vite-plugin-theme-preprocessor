@@ -40,18 +40,19 @@ export function resetStylePreprocessor(options = {}) {
         const preprocessorFiles = fsExtra.readdirSync(resolveDir) || [];
 
         preprocessorFiles.forEach((name) => {
-          if (name !== "node_modules"&&name!=='bin') {
+          if (name !== "node_modules" && name !== "bin") {
             fsExtra.removeSync(`${resolveDir}/${name}`);
           }
         });
       }
-      const originalPreDir = `${path.resolve(
-        "node_modules/.zougtTheme/original"
-      )}/${resolveName}`;
+      const originalPreDir = path.resolve(
+        "node_modules/.zougtTheme/original",
+        resolveName
+      ).replace(/\\/g,'/');
       if (fsExtra.existsSync(originalPreDir)) {
         const originalFiles = fsExtra.readdirSync(originalPreDir) || [];
         originalFiles.forEach((name) => {
-          if (name !== "node_modules"&&name!=='bin') {
+          if (name !== "node_modules" && name !== "bin") {
             fsExtra.copySync(
               `${originalPreDir}/${name}`,
               `${resolveDir}/${name}`
