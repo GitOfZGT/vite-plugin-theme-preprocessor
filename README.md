@@ -13,6 +13,8 @@
 
 > v1.4.0 + 支持
 
+这里以less为例，同样适用于scss。
+
 DEMO: [https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo](https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo)
 
 ![效果图](https://img-blog.csdnimg.cn/9bee30d711c54933a7e4ac0e28cdb7c3.gif)
@@ -148,7 +150,7 @@ yarn add @zougt/vite-plugin-theme-preprocessor -D
 
 **vite.config.js**
 
-> 注意：以下的配置适用于 预设主题模式。
+> 注意：以下的配置适用于 预设主题模式。文档的参数值都是默认值。
 
 ```js
 import themePreprocessorPlugin from "@zougt/vite-plugin-theme-preprocessor";
@@ -211,6 +213,13 @@ export default {
 ```
 
 **在线切换主题**
+
+预设主题切换，需要做的事情
+
+1、开发时只需，html标签的calss添加对应的scopeName，移除上个scopeName   
+2、打包后，如果开启extract: true，需要切换对应的link标签的href  
+
+可以选择使用如下封装好的方法，都默认做了这些事情。
 
 ```js
 import { toggleTheme } from "@zougt/vite-plugin-theme-preprocessor/dist/browser-utils";
