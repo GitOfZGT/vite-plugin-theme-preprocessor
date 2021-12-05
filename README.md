@@ -110,7 +110,17 @@ import setCustomTheme from "@setCustomTheme";
 setCustomTheme({
   Color,
   primaryColor: "#FF005A",
+  //gradientReplacer:{},
+  //targetValueReplacer:{}
 });
+```
+
+`setCustomTheme` 的可选参数 gradientReplacer 与 targetValueReplacer 的可用属性会跟随 .less 内容变化的，所以整个项目动态主题的模型应该最开始固化下来
+
+```shell
+# npm run dev 之后
+# 可以在终端使用 z-theme 命令查看  gradientReplacer 与 targetValueReplacer 的可用属性
+npx z-theme inspect
 ```
 
 **动态主题模式的原理**
