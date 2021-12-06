@@ -11,13 +11,17 @@
 - 不依赖 css3 vars
 - 浏览器兼容性良好（IE9+ ?，待验证 ，但 vite 构建的产物最低 Polyfill 到 IE11，需更低的，你可以用 webpack 版本的插件[@zougt/some-loader-utils](https://github.com/GitOfZGT/some-loader-utils)，所以兼容性问题取决用的框架）
 
+[demo仓库](https://github.com/GitOfZGT/dynamic-theme-demos)
+
 ## 动态主题模式
 
 > v1.4.0 + 支持
 
-可用颜色板选择任意的主题色，会自动处理项目中包括组件库涉及的梯度颜色替换，这里以less为例，同样适用于scss。
+可用颜色板选择任意的主题色，这里以less为例，同样适用于scss。
 
-[在线DEMO](https://gitofzgt.github.io/vite-dynamictheme-antd-vue-demo/)  [在线DEMO源码](https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo)
+[在线demo之一](https://gitofzgt.github.io/vite-dynamictheme-antd-vue-demo/) 
+
+[demo源码之一](https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo)
 
 ![效果图](https://img-blog.csdnimg.cn/9bee30d711c54933a7e4ac0e28cdb7c3.gif#pic_center)
 
@@ -32,7 +36,7 @@ yarn add  color @zougt/vite-plugin-theme-preprocessor @zougt/some-loader-utils -
 
 **vite.config.js**
 
-> 注意：以下的配置适用于 动态主题模式 ， 预设主题模式 请往文档下面对应的看。
+> 注意：以下的配置只适用于 动态主题模式 ， 预设主题模式 请往文档下面对应的看。
 
 ```js
 import { defineConfig } from "vite";
@@ -108,6 +112,8 @@ export default defineConfig({
 
 **在线切换主题**
 
+动态主题切换必须使用的 "@setCustomTheme" 模块，会自动处理项目中包括组件库涉及的梯度颜色替换
+
 ```js
 import Color from "color";
 // "@setCustomTheme" 是 themePreprocessorPlugin 提供的模块，setCustomTheme的参数必须提供Color模块，至于为什么不把 Color 直接依赖进去是有原因的
@@ -131,13 +137,15 @@ npx z-theme inspect
 
 **动态主题模式的原理**
 
-一言难尽
+> 一言难尽
 
 ## 预设主题模式
 
 预设多种主题，其实也可以用动态主题模式来做，如需类似效果图中有暗黑主题的，可能使用此模式更加方便
 
-[在线DEMO](https://gitofzgt.github.io/dynamic-theme-demos/vite-antd-vue-preset-theme/) [在线DEMO源码](https://github.com/GitOfZGT/dynamic-theme-demos/tree/master/projects/vite-antd-vue-preset-theme)
+[在线demo之一](https://gitofzgt.github.io/dynamic-theme-demos/vite-antd-vue-preset-theme/) 
+
+[demo源码之一](https://github.com/GitOfZGT/dynamic-theme-demos/tree/master/projects/vite-antd-vue-preset-theme)
 
 ![效果图](https://img-blog.csdnimg.cn/caa3ccb9949a4fc4a6a8c7442291ed07.gif)
 
@@ -152,7 +160,7 @@ yarn add @zougt/vite-plugin-theme-preprocessor -D
 
 **vite.config.js**
 
-> 注意：以下的配置适用于 预设主题模式。文档的参数值都是默认值。
+> 注意：以下的配置只适用于 预设主题模式。文档的参数值都是默认值。
 
 ```js
 import themePreprocessorPlugin from "@zougt/vite-plugin-theme-preprocessor";
@@ -221,7 +229,7 @@ export default {
 1、开发时只需，html标签的calss添加对应的scopeName，移除上个scopeName   
 2、打包后，如果开启extract: true，需要切换对应的link标签的href  
 
-可以选择使用如下封装好的方法，都默认做了这些事情。
+可以选择使用如下封装好的方法，默认做好了这些事情。
 
 ```js
 import { toggleTheme } from "@zougt/vite-plugin-theme-preprocessor/dist/browser-utils";
@@ -245,7 +253,7 @@ toggleTheme({
 // vite.config.js
 export default {
   optimizeDeps: {
-    // 排除 browser-utils.js 在vite的缓存依赖
+    // 排除 browser-utils.js 在vite的缓存依赖，对应 import { toggleTheme } from "@zougt/vite-plugin-theme-preprocessor/dist/browser-utils" 的路径
     exclude: ["@zougt/vite-plugin-theme-preprocessor/dist/browser-utils"],
   },
 };

@@ -34,6 +34,12 @@ function createThemeLinkTag({ id, href }) {
   styleLink.id = id;
   return styleLink;
 }
+/**
+ * 
+ * @param {object} opts 
+ * @param {string} opts.scopeName 
+ * @returns 
+ */
 export function toggleTheme(opts) {
   const options = {
     // multipleScopeVars: [],

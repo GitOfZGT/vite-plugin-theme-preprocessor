@@ -41,7 +41,8 @@ export default function themePreprocessorPlugin(options = {}) {
     .resolve(pack.name, {
       paths: [process.cwd()],
     })
-    .replace(/[\\/]dist[\\/]index\.js$/, "").replace(/\\/g,'/');
+    .replace(/[\\/]dist[\\/]index\.js$/, "")
+    .replace(/\\/g, "/");
   const customThemeOutputPath = `${targetRsoleved}/setCustomTheme.js`;
   let buildCommand;
   const processorNames = Object.keys(options);
@@ -99,6 +100,7 @@ export default function themePreprocessorPlugin(options = {}) {
 
       processorNames.forEach((lang) => {
         const langOptions = options[lang] || {};
+        // 合并参数
         defaultOptions = { ...defaultOptions, ...langOptions };
         if (
           Array.isArray(langOptions.multipleScopeVars) &&
@@ -112,21 +114,11 @@ export default function themePreprocessorPlugin(options = {}) {
             const founded = allmultipleScopeVars.find(
               (f) => f.scopeName === item.scopeName
             );
-            if (founded) {
-              let paths = [];
-              if (Array.isArray(founded.path)) {
-                paths = paths.concat(founded.path);
-              } else if (founded.path) {
-                paths.push(founded.path);
-              }
-              if (Array.isArray(item.path)) {
-                paths = paths.concat(item.path);
-              } else if (item.path) {
-                paths.push(item.path);
-              }
-              founded.path = Array.from(new Set(paths));
-            } else {
-              allmultipleScopeVars.push(item);
+            if (!founded) {
+              allmultipleScopeVars.push({
+                ...item,
+                path: null,
+              });
             }
           });
         }
@@ -134,7 +126,7 @@ export default function themePreprocessorPlugin(options = {}) {
       css.preprocessorOptions = preprocessorOptions;
       const modulesOptions = css.modules !== false ? css.modules || {} : null;
 
-      if (modulesOptions) {
+      if (modulesOptions && !defaultOptions.arbitraryMode) {
         modulesOptions.generateScopedName = getModulesScopeGenerater({
           multipleScopeVars: allmultipleScopeVars,
           generateScopedName: modulesOptions.generateScopedName,
@@ -150,32 +142,34 @@ export default function themePreprocessorPlugin(options = {}) {
       // 存储最终解析的配置
       config = resolvedConfig;
 
-      const browerPreprocessorOptions = {
-        ...defaultOptions,
-        multipleScopeVars: allmultipleScopeVars,
-      };
-
       createPulignParamsFile({
         extract: buildCommand !== "build" ? false : defaultOptions.extract,
       });
-
-      const packRoot = require
-        .resolve(pack.name, {
-          paths: [config.root],
-        })
-        .replace(/[\\/]index\.js$/, "").replace(/\\/g,'/');
-      // 将一些参数打入到 toBrowerEnvs.js , 由brower-utils.js 获取
-      fsExtra.writeFileSync(
-        `${packRoot}/toBrowerEnvs.js`,
-        `export const browerPreprocessorOptions = ${JSON.stringify(
-          browerPreprocessorOptions
-        )};\nexport const basePath="${
-          config.base || ""
-        }";\nexport const assetsDir="${
-          config.build.assetsDir || ""
-        }";\nexport const buildCommand="${buildCommand}";
+      if (!defaultOptions.arbitraryMode) {
+        // 预设主题模式，提供 brower-utils.js 需要的参数
+        const browerPreprocessorOptions = {
+          ...defaultOptions,
+          multipleScopeVars: allmultipleScopeVars,
+        };
+        const packRoot = require
+          .resolve(pack.name, {
+            paths: [config.root],
+          })
+          .replace(/[\\/]index\.js$/, "")
+          .replace(/\\/g, "/");
+        // 将一些参数打入到 toBrowerEnvs.js , 由brower-utils.js 获取
+        fsExtra.writeFileSync(
+          `${packRoot}/toBrowerEnvs.js`,
+          `export const browerPreprocessorOptions = ${JSON.stringify(
+            browerPreprocessorOptions
+          )};\nexport const basePath="${
+            config.base || ""
+          }";\nexport const assetsDir="${
+            config.build.assetsDir || ""
+          }";\nexport const buildCommand="${buildCommand}";
         `
-      );
+        );
+      }
       if (
         defaultOptions.arbitraryMode &&
         preCustomThemeOutputPath !== defaultOptions.customThemeOutputPath
@@ -215,9 +209,9 @@ export default function themePreprocessorPlugin(options = {}) {
           const resolveDir = `${pathnames
             .slice(0, index)
             .join("/")}/${resolveName}`;
-          const originalDir = path.resolve(
-            "node_modules/.zougtTheme/original"
-          ) .replace(/\\/g, "/");
+          const originalDir = path
+            .resolve("node_modules/.zougtTheme/original")
+            .replace(/\\/g, "/");
           if (
             !fsExtra.existsSync(resolveDir) &&
             !fsExtra.existsSync(`${originalDir}/${resolveName}`)
@@ -269,22 +263,6 @@ export default function themePreprocessorPlugin(options = {}) {
                 });
                 `
             );
-            // 如果 源less中存在bin，生成一份替代品的bin
-            // if (fsExtra.existsSync(`${resolveDir}/bin`)) {
-            //   fsExtra.readdirSync(`${resolveDir}/bin`).forEach((name) => {
-            //     if (fsExtra.statSync(`${resolveDir}/bin/${name}`).isFile()) {
-            //       if (!fsExtra.existsSync(`${substitutePreprocessorDir}/bin`)) {
-            //         fsExtra.mkdirSync(`${substitutePreprocessorDir}/bin`);
-            //       }
-            //       fsExtra.writeFileSync(
-            //         `${substitutePreprocessorDir}/bin/${name}`,
-            //         `#!/usr/bin/env node\n"use strict";\n
-            //           require("${originalDir}/${resolveName}/bin/${name}");
-            //         `
-            //       );
-            //     }
-            //   });
-            // }
 
             // 替换了处理器的标识
 
@@ -325,12 +303,14 @@ export default function themePreprocessorPlugin(options = {}) {
       return null;
     },
     load(id) {
+      // 动态主题模式下 加载虚拟模块 "@setCustomTheme"
       if (
         id === "@setCustomTheme" &&
         defaultOptions.arbitraryMode &&
         defaultOptions.customThemeOutputPath
       ) {
         if (buildCommand !== "build") {
+          // 开发模式
           return `import { default as setCustomTheme } from "${defaultOptions.customThemeOutputPath}";
           export default setCustomTheme;
           import Color from "color";
@@ -339,11 +319,13 @@ export default function themePreprocessorPlugin(options = {}) {
           })
         `;
         }
+        // 打包时"@setCustomTheme"模块的内容，会在 renderChunk 进行源码替换
         return `${setCustomThemeCodeReplacer};export default setCustomTheme;`;
       }
       return null;
     },
     renderChunk(code) {
+      // 打包才会进入这个钩子
       if (
         defaultOptions.arbitraryMode &&
         code.includes(setCustomThemeCodeReplacer)
@@ -457,7 +439,7 @@ export default function themePreprocessorPlugin(options = {}) {
 }
 
 /**
- * 主题热更新插件
+ * 动态主题模式的热更新插件
  * @returns object
  */
 
@@ -465,7 +447,9 @@ function themePreprocessorHmrPlugin() {
   let parentApi = null;
   let cacheThemeStyleContent = "";
   let buildCommand = "";
+  // 触发热更新时的 样式文件
   const hotUpdateStyleFiles = new Set();
+  // 进入transform的样式文件
   const transformStyleFiles = new Set();
   let hotServer = null;
   let config = {};
@@ -481,6 +465,7 @@ function themePreprocessorHmrPlugin() {
       config = resolvedConfig;
     },
     buildStart() {
+      // 获取依赖插件提供的 方法
       const parentName = "vite-plugin-theme-preprocessor";
       const parentPlugin = config.plugins.find(
         (plugin) => plugin.name === parentName
@@ -492,15 +477,18 @@ function themePreprocessorHmrPlugin() {
       parentApi = parentPlugin.api;
     },
     transform(code, id) {
+      // vite:css插件内的transform使用less/sass，需要在less/sass编译完后调用 getThemeStyleContent
       const defaultOptions = parentApi.getOptions();
       if (
         defaultOptions.arbitraryMode &&
         /\.(less|scss|sass)(\?.+)?/.test(id)
       ) {
         transformStyleFiles.add(id);
+
+        // 当transform的的样式文件数量 到达 触发热更新的样式文件数量时，就获取主题css，并触发热更新事件 import.meta.hot.on('custom-theme-update',()=>{}）
         if (
           hotUpdateStyleFiles.size &&
-          hotUpdateStyleFiles.size <= transformStyleFiles.size
+          hotUpdateStyleFiles.size === transformStyleFiles.size
         ) {
           getThemeStyleContent();
           createSetCustomTheme({
@@ -559,6 +547,7 @@ function themePreprocessorHmrPlugin() {
           }
         });
       }
+
       if (file === customThemeOutputPath) {
         return Promise.resolve([]);
       }
