@@ -70,7 +70,10 @@ export default function themePreprocessorPlugin(options = {}) {
     customThemeOutputPath,
     // style标签的id
     styleTagId: "custom-theme-tagid",
+    // boolean || "head" || "body"
     InjectDefaultStyleTagToHtml: true,
+    // 调整色相对比的范围值，low:往低减去的数值，high:往高加的数值
+    hueDiffControls: { low: 0, high: 0 },
   };
   const allmultipleScopeVars = [];
   let cacheThemeStyleContent = "";
@@ -367,16 +370,28 @@ export default function themePreprocessorPlugin(options = {}) {
               })
             : getThemeStyleContent();
         return themeResult.then((result) => {
+          let styleContent = cacheThemeStyleContent || "";
           if (result) {
-            const { styleContent } = result;
+            
+            styleContent = result.styleContent;
+
             cacheThemeStyleContent = styleContent;
+          }
+          if (styleContent) {
+            let injectTo = "body";
+            if (
+              InjectDefaultStyleTagToHtml === "head" &&
+              buildCommand === "build"
+            ) {
+              injectTo = "head-prepend";
+            }
             const tag = {
               tag: "style",
               attrs: {
                 id: styleTagId,
                 type: "text/css",
               },
-              injectTo: "body",
+              injectTo,
               children: styleContent,
             };
             return {
