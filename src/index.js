@@ -96,6 +96,7 @@ export default function themePreprocessorPlugin(options = {}) {
     },
     config(conf, { command }) {
       buildCommand = command;
+
       // 在对应的预处理器配置添加 multipleScopeVars 属性
 
       const css = conf.css || {};
@@ -136,9 +137,34 @@ export default function themePreprocessorPlugin(options = {}) {
         });
       }
 
-      css.modules = modulesOptions; // eslint-disable-next-line no-param-reassign
+      css.modules = modulesOptions;
+      const server = conf.server || {};
+      const watch = server.watch || {};
+      server.watch = {
+        ...watch,
+        // 热更新时必需的，希望监听setCustomTheme.js
+        ignored: ["!**/node_modules/**/setCustomTheme.js"].concat(
+          Array.isArray(watch.ignored)
+            ? watch.ignored
+            : watch.ignored
+            ? [watch.ignored]
+            : []
+        ),
+      };
 
-      return { ...conf, css };
+      const optimizeDeps = conf.optimizeDeps || {};
+      optimizeDeps.exclude = [
+        "@zougt/vite-plugin-theme-preprocessor/dist/browser-utils",
+        "@zougt/vite-plugin-theme-preprocessor/dist/browser-utils.js",
+      ].concat(
+        Array.isArray(optimizeDeps.exclude)
+          ? optimizeDeps.exclude
+          : optimizeDeps.exclude
+          ? [optimizeDeps.exclude]
+          : []
+      );
+
+      return { ...conf, css, optimizeDeps, server };
     },
 
     configResolved(resolvedConfig) {
@@ -372,7 +398,6 @@ export default function themePreprocessorPlugin(options = {}) {
         return themeResult.then((result) => {
           let styleContent = cacheThemeStyleContent || "";
           if (result) {
-            
             styleContent = result.styleContent;
 
             cacheThemeStyleContent = styleContent;

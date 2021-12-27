@@ -9,22 +9,30 @@ import {
   browerPreprocessorOptions,
 } from "./toBrowerEnvs";
 
+function getRegstr(scopeName) {
+  return `(^${scopeName}\\s+|\\s+${scopeName}\\s+|\\s+${scopeName}$)`;
+}
 export function addClassNameToHtmlTag({ scopeName, multipleScopeVars }) {
   const $multipleScopeVars =
     Array.isArray(multipleScopeVars) && multipleScopeVars.length
       ? multipleScopeVars
       : browerPreprocessorOptions.multipleScopeVars;
 
-  let currentHtmlClassNames = (document.documentElement.className || "").split(
-    /\s+/g
-  );
-  if (!currentHtmlClassNames.includes(scopeName)) {
-    currentHtmlClassNames = currentHtmlClassNames.filter((classname) =>
-      $multipleScopeVars.every((item) => item.scopeName !== classname)
-    );
-    currentHtmlClassNames.push(scopeName);
-    document.documentElement.className = currentHtmlClassNames.join(" ");
+  let currentClassName = document.documentElement.className;
+
+  if (new RegExp(getRegstr(scopeName)).test(currentClassName)) {
+    return;
   }
+  $multipleScopeVars.forEach((item) => {
+    currentClassName = currentClassName.replace(
+      new RegExp(getRegstr(item.scopeName), "g"),
+      ` ${scopeName} `
+    );
+  });
+  document.documentElement.className = currentClassName.replace(
+    /(^\s+|\s+$)/g,
+    ""
+  );
 }
 function createThemeLinkTag({ id, href }) {
   // 不存在的话，则新建一个
@@ -35,10 +43,10 @@ function createThemeLinkTag({ id, href }) {
   return styleLink;
 }
 /**
- * 
- * @param {object} opts 
- * @param {string} opts.scopeName 
- * @returns 
+ *
+ * @param {object} opts
+ * @param {string} opts.scopeName
+ * @returns
  */
 export function toggleTheme(opts) {
   const options = {
@@ -82,21 +90,21 @@ export function toggleTheme(opts) {
         addClassNameToHtmlTag(options);
       }
     };
-  } else {
-    // 不存在的话，则新建一个
-    styleLink = createThemeLinkTag({ id: linkId, href });
-    // 注：如果是removeCssScopeName:true移除了主题文件的权重类名，就可以不用修改className 操作
-    if (!browerPreprocessorOptions.removeCssScopeName) {
-      addClassNameToHtmlTag(options);
-    }
-    document[
-      (
-        options.themeLinkTagInjectTo ||
-        browerPreprocessorOptions.themeLinkTagInjectTo ||
-        ""
-      ).replace("-prepend", "")
-    ].append(styleLink);
+    return;
   }
+  // 不存在的话，则新建一个
+  styleLink = createThemeLinkTag({ id: linkId, href });
+  // 注：如果是removeCssScopeName:true移除了主题文件的权重类名，就可以不用修改className 操作
+  if (!browerPreprocessorOptions.removeCssScopeName) {
+    addClassNameToHtmlTag(options);
+  }
+  document[
+    (
+      options.themeLinkTagInjectTo ||
+      browerPreprocessorOptions.themeLinkTagInjectTo ||
+      ""
+    ).replace("-prepend", "")
+  ].appendChild(styleLink);
 }
 
 export default {

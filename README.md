@@ -11,7 +11,7 @@
 - 不依赖 css3 vars
 - 浏览器兼容性良好（IE9+ ?，待验证 ，但 vite 构建的产物最低 Polyfill 到 IE11，需更低的，你可以用 webpack 版本的插件[@zougt/some-loader-utils](https://github.com/GitOfZGT/some-loader-utils)，所以兼容性问题取决用的框架）
 
-[demo仓库](https://github.com/GitOfZGT/dynamic-theme-demos)
+[demo repositories](https://github.com/GitOfZGT/dynamic-theme-demos)
 
 ## 动态主题模式
 
@@ -19,9 +19,9 @@
 
 可用颜色板选择任意的主题色，这里以less为例，同样适用于scss。
 
-[在线demo之一](https://gitofzgt.github.io/vite-dynamictheme-antd-vue-demo/) 
+[one inline demo](https://gitofzgt.github.io/vite-dynamictheme-antd-vue-demo/) 
 
-[demo源码之一](https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo)
+[one demo repository](https://github.com/GitOfZGT/vite-dynamictheme-antd-vue-demo)
 
 ![效果图](https://img-blog.csdnimg.cn/9bee30d711c54933a7e4ac0e28cdb7c3.gif#pic_center)
 
@@ -46,13 +46,6 @@ import {
 } from "@zougt/vite-plugin-theme-preprocessor";
 import path from "path";
 export default defineConfig({
-  server: {
-    port: 3300,
-    watch: {
-      // 热更新时必需的，希望监听setCustomTheme.js
-      ignored: ["!**/node_modules/**/setCustomTheme.js"],
-    },
-  },
   plugins: [
     // 创建动态主题切换
     themePreprocessorPlugin({
@@ -143,9 +136,9 @@ npx z-theme inspect
 
 预设多种主题，其实也可以用动态主题模式来做，如需类似效果图中有暗黑主题的，可能使用此模式更加方便
 
-[在线demo之一](https://gitofzgt.github.io/dynamic-theme-demos/vite-antd-vue-preset-theme/) 
+[one inline demo](https://gitofzgt.github.io/dynamic-theme-demos/vite-antd-vue-preset-theme/) 
 
-[demo源码之一](https://github.com/GitOfZGT/dynamic-theme-demos/tree/master/projects/vite-antd-vue-preset-theme)
+[one demo repository](https://github.com/GitOfZGT/dynamic-theme-demos/tree/master/projects/vite-antd-vue-preset-theme)
 
 ![效果图](https://img-blog.csdnimg.cn/caa3ccb9949a4fc4a6a8c7442291ed07.gif)
 
@@ -245,18 +238,6 @@ toggleTheme({
   // 可选，对应 themePreprocessorPlugin 的 multipleScopeVars
   // multipleScopeVars
 });
-```
-
-为确保 toggleTheme 的一些默认参数是最新，需要在 vite.config.js 按如下配置
-
-```js
-// vite.config.js
-export default {
-  optimizeDeps: {
-    // 排除 browser-utils.js 在vite的缓存依赖，对应 import { toggleTheme } from "@zougt/vite-plugin-theme-preprocessor/dist/browser-utils" 的路径
-    exclude: ["@zougt/vite-plugin-theme-preprocessor/dist/browser-utils"],
-  },
-};
 ```
 
 **预设多主题编译原理示例（以 sass 为例）**
