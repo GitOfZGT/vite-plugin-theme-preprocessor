@@ -10,7 +10,7 @@ import {
 } from "./toBrowerEnvs";
 
 function getRegstr(scopeName) {
-  return `(^${scopeName}\\s+|\\s+${scopeName}\\s+|\\s+${scopeName}$)`;
+  return `(^${scopeName}\\s+|\\s+${scopeName}\\s+|\\s+${scopeName}$|^${scopeName}$)`;
 }
 export function addClassNameToHtmlTag({ scopeName, multipleScopeVars }) {
   const $multipleScopeVars =
