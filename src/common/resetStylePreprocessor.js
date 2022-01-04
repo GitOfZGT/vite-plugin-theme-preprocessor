@@ -17,11 +17,7 @@ export function resetStylePreprocessor(options = {}) {
     let resolveDir = "";
     let resolveName = "";
     try {
-      const resolved = require
-        .resolve(langName, {
-          paths: [options.root || process.cwd()],
-        })
-        .replace(/\\/g, "/");
+      const resolved = require.resolve(langName).replace(/\\/g, "/");
       const pathnames = resolved.split("/");
       const index = pathnames.findIndex(
         (str) => new RegExp(`^_${langName}@`).test(str) || str === langName
@@ -45,10 +41,9 @@ export function resetStylePreprocessor(options = {}) {
           }
         });
       }
-      const originalPreDir = path.resolve(
-        "node_modules/.zougtTheme/original",
-        resolveName
-      ).replace(/\\/g,'/');
+      const originalPreDir = path
+        .resolve("node_modules/.zougtTheme/original", resolveName)
+        .replace(/\\/g, "/");
       if (fsExtra.existsSync(originalPreDir)) {
         const originalFiles = fsExtra.readdirSync(originalPreDir) || [];
         originalFiles.forEach((name) => {

@@ -38,9 +38,7 @@ export default function themePreprocessorPlugin(options = {}) {
   };
   // @zougt/vite-plugin-theme-preprocessor 被 require() 时的实际路径
   const targetRsoleved = require
-    .resolve(pack.name, {
-      paths: [process.cwd()],
-    })
+    .resolve(pack.name)
     .replace(/[\\/]dist[\\/]index\.js$/, "")
     .replace(/\\/g, "/");
   const customThemeOutputPath = `${targetRsoleved}/setCustomTheme.js`;
@@ -121,8 +119,15 @@ export default function themePreprocessorPlugin(options = {}) {
             if (!founded) {
               allmultipleScopeVars.push({
                 ...item,
-                path: null,
               });
+            } else if (item.path) {
+              founded.path = Array.isArray(founded.path)
+                ? founded.path
+                : [founded.path];
+              const itemPath = Array.isArray(item.path)
+                ? item.path
+                : [item.path];
+              founded.path = [...new Set(founded.path.concat(itemPath))];
             }
           });
         }
@@ -181,9 +186,7 @@ export default function themePreprocessorPlugin(options = {}) {
           multipleScopeVars: allmultipleScopeVars,
         };
         const packRoot = require
-          .resolve(pack.name, {
-            paths: [config.root],
-          })
+          .resolve(pack.name)
           .replace(/[\\/]index\.js$/, "")
           .replace(/\\/g, "/");
         // 将一些参数打入到 toBrowerEnvs.js , 由brower-utils.js 获取
@@ -222,11 +225,7 @@ export default function themePreprocessorPlugin(options = {}) {
         processorNames.map((lang) => {
           const langName = lang === "scss" ? "sass" : lang;
           // 得到 require('less') 时的绝对路径
-          const resolved = require
-            .resolve(langName, {
-              paths: [config.root],
-            })
-            .replace(/\\/g, "/");
+          const resolved = require.resolve(langName).replace(/\\/g, "/");
           const pathnames = resolved.split("/");
           // 存在类似 _less@ 开头的，兼容cnpm install
           const index = pathnames.findIndex(
