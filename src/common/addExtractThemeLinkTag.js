@@ -1,5 +1,5 @@
 import { addScopnameToHtmlClassname } from "@zougt/some-loader-utils";
-
+import path from "path";
 export function addExtractThemeLinkTag({
   html,
   defaultOptions,
@@ -32,7 +32,9 @@ export function addExtractThemeLinkTag({
         (typeof customThemeCssFileName === "function"
           ? customThemeCssFileName(scopeName)
           : "") || scopeName;
-      const linkHref = `/${config.base || ""}/${
+      const base = config.base || "";
+
+      const linkHref = `${base ? `${base}/` : base}${
         outputDir || config.build.assetsDir
       }/${filename}.css`.replace(/\/+(?=\/)/g, "");
       const tag = {
