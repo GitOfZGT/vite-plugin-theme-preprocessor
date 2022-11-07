@@ -37,11 +37,11 @@ export default function themePreprocessorPlugin(options = {}) {
     root: process.cwd(),
   };
   // @zougt/vite-plugin-theme-preprocessor 被 require() 时的实际路径
-  const targetRsoleved = require
+  const targetResolved = require
     .resolve(pack.name)
     .replace(/[\\/]dist[\\/]index\.js$/, "")
     .replace(/\\/g, "/");
-  const customThemeOutputPath = `${targetRsoleved}/setCustomTheme.js`;
+  const customThemeOutputPath = `${targetResolved}/setCustomTheme.js`;
   let buildCommand;
   const processorNames = Object.keys(options);
 
@@ -249,7 +249,7 @@ export default function themePreprocessorPlugin(options = {}) {
             );
           }
           // substitute：替代品的源位置
-          const substituteDir = `${targetRsoleved}/dist/substitute`;
+          const substituteDir = `${targetResolved}/dist/substitute`;
           const substitutePreprocessorDir = `${substituteDir}/${resolveName}`;
 
           return resetStylePreprocessor({ langs: [langName] }).then(() => {
@@ -277,11 +277,18 @@ export default function themePreprocessorPlugin(options = {}) {
             const mainFile = resolved
               .replace(resolveDir, "")
               .replace(/^\/+/g, "");
+
+            // @zougt/some-loader-utils 被 require() 时的实际路径
+            const loaderUtilsResolved = require
+              .resolve("@zougt/some-loader-utils")
+              .replace(/[\\/]index\.js$/, "")
+              .replace(/\\/g, "/");
+
             // 向 "index.js" 中写上如 "getLess" 的调用
             fsExtra.writeFileSync(
               `${substitutePreprocessorDir}/${mainFile}`,
               `const nodePreprocessor = require("${originalDir}/${resolveName}/${mainFile}");
-                const { ${funName} } =  require("@zougt/some-loader-utils");
+                const { ${funName} } =  require("${loaderUtilsResolved}");
                 module.exports = ${funName}({
                   arbitraryMode:${defaultOptions.arbitraryMode},
                   includeStyleWithColors:${JSON.stringify(
