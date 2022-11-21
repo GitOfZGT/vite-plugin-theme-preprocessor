@@ -67,7 +67,7 @@ export function toggleTheme(opts) {
     options.themeLinkTagId || browerPreprocessorOptions.themeLinkTagId;
   let styleLink = document.getElementById(linkId);
   const href = options.customLinkHref(
-    `/${basePath || ""}/${
+    `${basePath || ""}/${
       browerPreprocessorOptions.outputDir || assetsDir || ""
     }/${options.scopeName}.css`.replace(/\/+(?=\/)/g, "")
   );
