@@ -67,9 +67,9 @@ export function toggleTheme(opts) {
     options.themeLinkTagId || browerPreprocessorOptions.themeLinkTagId;
   let styleLink = document.getElementById(linkId);
   const href = options.customLinkHref(
-    `${basePath || ""}/${
+    `${(basePath || "").replace(/\/$/, "")}${`/${
       browerPreprocessorOptions.outputDir || assetsDir || ""
-    }/${options.scopeName}.css`.replace(/(?<!:)\/+(?=\/)/g, "")
+    }/${options.scopeName}.css`.replace(/\/+(?=\/)/g, "")}`
   );
   if (styleLink) {
     // 假如存在id为theme-link-tag 的link标签，创建一个新的添加上去加载完成后再60毫秒后移除旧的
